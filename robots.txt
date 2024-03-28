@@ -1,0 +1,16 @@
+User-agent: *
+Disallow: /deeper-links.html
+Disallow: /index.html
+Disallow: /links.html
+Disallow: /moar-links.html
+Disallow: /simple.html
+Disallow: /some-nested-files/abc.html
+Disallow: /some-nested-files/efg.html
+Disallow: /some-nested-files/even-deeper/four.html
+Disallow: /some-nested-files/even-deeper/one.html
+Disallow: /some-nested-files/even-deeper/rabbit-hole/alice.html
+Disallow: /some-nested-files/even-deeper/three.html
+Disallow: /some-nested-files/even-deeper/two.html
+Disallow: /some-nested-files/hij.html
+Disallow: /some-nested-files/lmnop.html
+Disallow: /some-nested-files/xyz.html
