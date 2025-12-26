@@ -1,43 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
-    integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w=="
-    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>cj winslow</title>
   <style>
-    html, body {
-        height: 100%;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
-        margin: 0;
-        background-color: dimgrey;
+      background: #454545;
+      font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
     }
-    .flex-container {
-        height: 100%;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+    .name {
+      color: #888;
+      font-size: 0.9rem;
+      letter-spacing: 0.15em;
+      margin-bottom: 2.5rem;
+      text-transform: lowercase;
     }
-    .row {
-        width: auto;
-    }
-    .flex-item {
-        text-align: center;
-        font-size: 1.5rem;
+    nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      text-align: center;
     }
     a {
-        color: white;
-        text-decoration: none;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 1.1rem;
+      transition: color 0.15s;
+    }
+    a:hover { color: #fff; }
+    .quiet {
+      position: fixed;
+      bottom: 1.5rem;
+      color: #555;
+      font-size: 0.7rem;
     }
   </style>
 </head>
 <body>
-  <section>
-    <div class="flex-container">
-      <div class="flex-item"><a href="https://www.linkedin.com/in/cjwinslow">LinkedIn</a></div>
-      <div class="flex-item"><a href="https://www.twitter.com/seajayflies">Twitter</a></div>
-      <div class="flex-item"><a href="https://www.instagram.com/seajayflies">IG</a></div>
-    </div>
-  </section>
+  <p class="name">cj winslow</p>
+  <nav>
+    <a href="https://github.com/Whoaa512">github</a>
+    <a href="https://www.linkedin.com/in/cjwinslow">linkedin</a>
+    <a href="https://www.twitter.com/seajayflies">twitter</a>
+    <a href="https://www.instagram.com/seajayflies">ig</a>
+  </nav>
+  <p class="quiet">grug brain minimalist</p>
 </body>
+</html>
