@@ -161,7 +161,7 @@
 
     #player button:hover { color: var(--accent); }
 
-    #chapter-select {
+    #chapter-select, #speed-select {
       background: var(--bg);
       color: var(--text);
       border: 1px solid #333;
@@ -169,8 +169,10 @@
       font-family: var(--serif);
       font-size: 0.85rem;
       border-radius: 4px;
-      max-width: 200px;
     }
+
+    #chapter-select { max-width: 200px; }
+    #speed-select { width: 60px; }
 
     #progress-container {
       flex: 1;
@@ -288,7 +290,8 @@
       html { font-size: 16px; }
       h1 { font-size: 2rem; }
       #player { flex-wrap: wrap; gap: 0.5rem; }
-      #chapter-select { max-width: 140px; font-size: 0.75rem; }
+      #chapter-select { max-width: 120px; font-size: 0.75rem; }
+      #speed-select { width: 50px; font-size: 0.75rem; }
       #progress-container { order: 3; width: 100%; }
     }
   </style>
@@ -1560,6 +1563,14 @@
       <option value="8">Ch 9: The Long Game</option>
       <option value="9">Afterword</option>
     </select>
+    <select id="speed-select" title="Playback speed">
+      <option value="0.75">0.75x</option>
+      <option value="1" selected>1x</option>
+      <option value="1.25">1.25x</option>
+      <option value="1.5">1.5x</option>
+      <option value="1.75">1.75x</option>
+      <option value="2">2x</option>
+    </select>
     <div id="progress-container">
       <div id="progress"><div id="progress-bar"></div></div>
       <span id="time">0:00 / 0:00</span>
@@ -1591,9 +1602,11 @@
     const progressBar = document.getElementById('progress-bar');
     const timeDisplay = document.getElementById('time');
     const resumeBanner = document.getElementById('resume-banner');
+    const speedSelect = document.getElementById('speed-select');
 
     let currentChapter = 0;
     const STORAGE_KEY = 'gardeners-progress';
+    const SPEED_KEY = 'gardeners-speed';
 
     function saveProgress() {
       const data = {
@@ -1697,6 +1710,19 @@
     chapterSelect.addEventListener('change', (e) => {
       loadChapter(parseInt(e.target.value), !audio.paused);
     });
+
+    speedSelect.addEventListener('change', (e) => {
+      const rate = parseFloat(e.target.value);
+      audio.playbackRate = rate;
+      localStorage.setItem(SPEED_KEY, rate);
+    });
+
+    // Restore saved playback speed
+    const savedSpeed = localStorage.getItem(SPEED_KEY);
+    if (savedSpeed) {
+      audio.playbackRate = parseFloat(savedSpeed);
+      speedSelect.value = savedSpeed;
+    }
 
     progress.addEventListener('click', (e) => {
       const rect = progress.getBoundingClientRect();
