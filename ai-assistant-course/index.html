@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Set Up Your AI Assistant This Week — Free 5-Day Course</title>
+  <meta name="description" content="A free 5-day email course that takes you from 'I should really try AI' to a working personal assistant — in 15 minutes a day.">
+  <meta property="og:title" content="Set Up Your AI Assistant This Week">
+  <meta property="og:description" content="Free 5-day email course. Go from zero to a working AI assistant in 15 minutes a day.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cjwinslow.com/ai-assistant-course/">
+  <style>
+    /* Reset & Base */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+      color: #e0e0e0;
+      background: #1a1a2e;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout */
+    .container { max-width: 680px; margin: 0 auto; padding: 0 1.5rem; }
+    section { padding: 4rem 0; }
+
+    /* Typography */
+    h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; }
+    h2 { font-size: clamp(1.4rem, 3.5vw, 1.9rem); line-height: 1.25; font-weight: 600; margin-bottom: 1rem; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; color: #b0b0c0; }
+
+    /* Hero */
+    .hero {
+      padding: 5rem 0 3rem;
+      text-align: center;
+    }
+    .hero h1 { color: #fff; margin-bottom: 1.25rem; }
+    .hero .subtitle {
+      font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+      color: #9090b0;
+      max-width: 540px;
+      margin: 0 auto 2rem;
+      line-height: 1.5;
+    }
+    .social-proof {
+      font-size: 0.85rem;
+      color: #707090;
+      margin-top: 1.5rem;
+    }
+
+    /* CTA Form */
+    .cta-form {
+      display: flex;
+      gap: 0.5rem;
+      max-width: 460px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .cta-form input[type="email"] {
+      flex: 1 1 240px;
+      padding: 0.85rem 1rem;
+      border: 1.5px solid #3a3a5c;
+      border-radius: 8px;
+      background: #16162b;
+      color: #e0e0e0;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .cta-form input[type="email"]:focus { border-color: #6c63ff; }
+    .cta-form input[type="email"]::placeholder { color: #606080; }
+    .btn {
+      padding: 0.85rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      background: #6c63ff;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #5a52e0; }
+    .btn:active { transform: scale(0.98); }
+    .form-note {
+      font-size: 0.8rem;
+      color: #606080;
+      text-align: center;
+      margin-top: 0.75rem;
+    }
+
+    /* Success State */
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 1.5rem;
+      background: #1e2a1e;
+      border: 1.5px solid #2d5a2d;
+      border-radius: 10px;
+      max-width: 460px;
+      margin: 0 auto;
+    }
+    .form-success.show { display: block; }
+    .form-success p { color: #8bc68b; margin: 0; }
+
+    /* Problem */
+    .problem { border-top: 1px solid #2a2a4a; }
+    .problem h2 { color: #e8e8f0; }
+    .problem p:last-of-type { color: #6c63ff; font-weight: 600; font-size: 1.1rem; }
+
+    /* What You'll Build */
+    .build { border-top: 1px solid #2a2a4a; }
+    .build h2 { color: #e8e8f0; }
+    .checklist { list-style: none; margin: 1.5rem 0; }
+    .checklist li {
+      padding: 0.6rem 0;
+      padding-left: 2rem;
+      position: relative;
+      color: #c0c0d0;
+    }
+    .checklist li::before {
+      content: '✅';
+      position: absolute;
+      left: 0;
+      font-size: 0.9rem;
+    }
+    .checklist li strong { color: #e0e0f0; }
+
+    /* Roadmap */
+    .roadmap { border-top: 1px solid #2a2a4a; }
+    .roadmap h2 { color: #e8e8f0; }
+    .day-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+    .day-card {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: #1e1e38;
+      border-radius: 10px;
+      border: 1px solid #2a2a4a;
+    }
+    .day-num {
+      font-weight: 700;
+      color: #6c63ff;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      min-width: 3rem;
+    }
+    .day-card .desc { color: #c0c0d0; flex: 1; }
+    .day-card .time { color: #707090; font-size: 0.85rem; white-space: nowrap; }
+
+    /* Who */
+    .who { border-top: 1px solid #2a2a4a; }
+    .who h2 { color: #e8e8f0; }
+    .who-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+    @media (max-width: 500px) { .who-grid { grid-template-columns: 1fr; } }
+    .who-grid h3 { color: #9090b0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+    .who-grid ul { list-style: none; }
+    .who-grid li { padding: 0.35rem 0; color: #b0b0c0; font-size: 0.95rem; }
+    .who-grid .for li::before { content: '→ '; color: #6c63ff; }
+    .who-grid .not-for li::before { content: '— '; color: #505070; }
+
+    /* About */
+    .about { border-top: 1px solid #2a2a4a; }
+    .about h2 { color: #e8e8f0; }
+    .about p { color: #b0b0c0; }
+
+    /* FAQ */
+    .faq { border-top: 1px solid #2a2a4a; }
+    .faq h2 { color: #e8e8f0; margin-bottom: 1.5rem; }
+    details {
+      border-bottom: 1px solid #2a2a4a;
+      padding: 1rem 0;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #d0d0e0;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: '+'; color: #6c63ff; font-size: 1.3rem; transition: transform 0.2s; }
+    details[open] summary::after { content: '−'; }
+    details p { margin-top: 0.75rem; font-size: 0.95rem; }
+
+    /* Bottom CTA */
+    .bottom-cta {
+      text-align: center;
+      padding: 4rem 0 5rem;
+      border-top: 1px solid #2a2a4a;
+    }
+    .bottom-cta h2 { color: #fff; margin-bottom: 0.5rem; }
+    .bottom-cta .subtitle { color: #9090b0; margin-bottom: 2rem; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid #2a2a4a;
+    }
+    footer a { color: #6c63ff; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    footer p { font-size: 0.8rem; color: #505070; }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <h1>Set Up Your AI Assistant<br>This Week</h1>
+      <p class="subtitle">A free 5-day email course that takes you from "I should really try AI" to a working personal assistant — in 15 minutes a day.</p>
+
+      <!-- TODO: Replace mailto fallback with Formspree or proper backend. -->
+      <!-- To use Formspree: create account, get form ID, replace action URL -->
+      <form class="cta-form" id="signup-form" action="mailto:hey@cjwinslow.com" method="post" enctype="text/plain">
+        <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
+        <button type="submit" class="btn">Start the Free Course →</button>
+      </form>
+      <p class="form-note">No spam. 5 emails over 5 days. Unsubscribe anytime.</p>
+      <div class="form-success" id="form-success">
+        <p>🎉 You're in! Check your inbox for Day 1.</p>
+      </div>
+
+      <p class="social-proof">Built by the developer behind <strong style="color:#b0b0c0">OpenClaw</strong> and <strong style="color:#b0b0c0">EasyClaw</strong> — the tools behind Sahil Bloom's viral AI setup journey.</p>
+    </div>
+  </section>
+
+  <!-- Problem -->
+  <section class="problem">
+    <div class="container">
+      <h2>You know AI is important.<br>You just haven't… done it yet.</h2>
+      <p>Maybe you've played with ChatGPT a few times. Maybe you've bookmarked twelve "getting started with AI" articles that you'll definitely read someday.</p>
+      <p>But you don't have an AI assistant. Not a real one — not one that knows your schedule, your preferences, and your priorities. Not one that actually helps you every day.</p>
+      <p>You're not behind because you're not smart enough. You're behind because nobody's shown you the simple path.</p>
+      <p>That changes this week.</p>
+    </div>
+  </section>
+
+  <!-- What You'll Build -->
+  <section class="build">
+    <div class="container">
+      <h2>What You'll Build</h2>
+      <p>In 5 days, you'll have a personal AI assistant that:</p>
+      <ul class="checklist">
+        <li><strong>Knows you</strong> — your work, your priorities, how you like to communicate</li>
+        <li><strong>Runs daily workflows</strong> — morning briefings, research, message drafting</li>
+        <li><strong>Lives on your phone</strong> — accessible whenever you need it</li>
+        <li><strong>Gets better over time</strong> — learns from your feedback</li>
+      </ul>
+      <p>No coding. No technical background. No expensive subscriptions.<br>Just one email a day, 15–30 minutes of your time.</p>
+    </div>
+  </section>
+
+  <!-- Roadmap -->
+  <section class="roadmap">
+    <div class="container">
+      <h2>The 5-Day Roadmap</h2>
+      <div class="day-grid">
+        <div class="day-card">
+          <span class="day-num">Day 1</span>
+          <span class="desc">Your first AI conversation — and why it works</span>
+          <span class="time">10 min</span>
+        </div>
+        <div class="day-card">
+          <span class="day-num">Day 2</span>
+          <span class="desc">Personalize your assistant so it actually knows you</span>
+          <span class="time">20 min</span>
+        </div>
+        <div class="day-card">
+          <span class="day-num">Day 3</span>
+          <span class="desc">Set up workflows that save real time every day</span>
+          <span class="time">20 min</span>
+        </div>
+        <div class="day-card">
+          <span class="day-num">Day 4</span>
+          <span class="desc">Fix the frustrations — honest troubleshooting</span>
+          <span class="time">15 min</span>
+        </div>
+        <div class="day-card">
+          <span class="day-num">Day 5</span>
+          <span class="desc">Your roadmap for the next month and beyond</span>
+          <span class="time">10 min</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who -->
+  <section class="who">
+    <div class="container">
+      <h2>Is This For You?</h2>
+      <div class="who-grid">
+        <div class="for">
+          <h3>This is for you if…</h3>
+          <ul>
+            <li>You keep meaning to "get into AI" but haven't started</li>
+            <li>You own a business and know AI could help — but don't have 6 hours</li>
+            <li>You've tried ChatGPT but never made it stick daily</li>
+          </ul>
+        </div>
+        <div class="not-for">
+          <h3>Probably not for you if…</h3>
+          <ul>
+            <li>You want to build AI models from scratch</li>
+            <li>You already have a fully configured AI workflow</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="about">
+    <div class="container">
+      <h2>Why Listen to Me</h2>
+      <p>I'm CJ. I built <strong style="color:#e0e0f0">OpenClaw</strong> — an open-source AI assistant framework — and <strong style="color:#e0e0f0">EasyClaw</strong>, the tool that makes setting up AI assistants accessible to everyone.</p>
+      <p>My personal AI assistant, Nova, manages my schedule, drafts my messages, does research, and helps me build software. Every day. It's not a demo — it's my life.</p>
+      <p>I've helped dozens of people set up their own AI assistants. I know exactly where people get stuck and I know the shortcuts. This course is those shortcuts, in order, with nothing extra.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq">
+    <div class="container">
+      <h2>FAQ</h2>
+      <details>
+        <summary>Do I need to pay for any AI tools?</summary>
+        <p>Most people can get started with free tiers (ChatGPT free, Claude free, etc.). The course works regardless of which platform you choose.</p>
+      </details>
+      <details>
+        <summary>How much time does this take?</summary>
+        <p>15–30 minutes per day for 5 days. That's it.</p>
+      </details>
+      <details>
+        <summary>Does it work on my device?</summary>
+        <p>It works on any device with a web browser. Phone, tablet, laptop — whatever you've got.</p>
+      </details>
+      <details>
+        <summary>What if I already use ChatGPT sometimes?</summary>
+        <p>Perfect — you're ahead. Day 1 will be quick for you, and Days 2–5 will take you much further than casual use.</p>
+      </details>
+      <details>
+        <summary>Will you try to sell me stuff?</summary>
+        <p>I'll mention other resources on Day 5. No hard sell, no surprise upsells mid-course. The 5-day course is genuinely free and genuinely complete.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Bottom CTA -->
+  <section class="bottom-cta">
+    <div class="container">
+      <h2>Your AI assistant is 5 days away.</h2>
+      <p class="subtitle">Start for free. 15 minutes a day. Real results.</p>
+      <form class="cta-form" id="signup-form-bottom" action="mailto:hey@cjwinslow.com" method="post" enctype="text/plain">
+        <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
+        <button type="submit" class="btn">Start the Free Course →</button>
+      </form>
+      <p class="form-note">No spam. 5 emails over 5 days. Unsubscribe anytime.</p>
+      <div class="form-success" id="form-success-bottom">
+        <p>🎉 You're in! Check your inbox for Day 1.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p><a href="/">cjwinslow.com</a></p>
+    </div>
+  </footer>
+
+  <script>
+    // TODO: Replace with proper form submission (Formspree, etc.)
+    // For now, prevent mailto and show success state as placeholder
+    document.querySelectorAll('.cta-form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = form.querySelector('input[type="email"]').value;
+        if (!email) return;
+        
+        // Hide form, show success
+        form.style.display = 'none';
+        const successEl = form.nextElementSibling.nextElementSibling || 
+                          form.parentElement.querySelector('.form-success');
+        if (successEl) successEl.classList.add('show');
+        
+        // Store in localStorage as backup
+        const signups = JSON.parse(localStorage.getItem('ai-course-signups') || '[]');
+        signups.push({ email, ts: new Date().toISOString() });
+        localStorage.setItem('ai-course-signups', JSON.stringify(signups));
+        
+        console.log('Signup:', email);
+        // TODO: POST to actual backend here
+      });
+    });
+  </script>
+</body>
+</html>
