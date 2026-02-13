@@ -218,9 +218,7 @@
       <h1>Set Up Your AI Assistant<br>This Week</h1>
       <p class="subtitle">A free 5-day email course that takes you from "I should really try AI" to a working personal assistant — in 15 minutes a day.</p>
 
-      <!-- TODO: Replace mailto fallback with Formspree or proper backend. -->
-      <!-- To use Formspree: create account, get form ID, replace action URL -->
-      <form class="cta-form" id="signup-form" action="mailto:hey@cjwinslow.com" method="post" enctype="text/plain">
+      <form class="cta-form" id="signup-form">
         <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
         <button type="submit" class="btn">Start the Free Course →</button>
       </form>
@@ -359,7 +357,7 @@
     <div class="container">
       <h2>Your AI assistant is 5 days away.</h2>
       <p class="subtitle">Start for free. 15 minutes a day. Real results.</p>
-      <form class="cta-form" id="signup-form-bottom" action="mailto:hey@cjwinslow.com" method="post" enctype="text/plain">
+      <form class="cta-form" id="signup-form-bottom">
         <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
         <button type="submit" class="btn">Start the Free Course →</button>
       </form>
@@ -378,27 +376,47 @@
   </footer>
 
   <script>
-    // TODO: Replace with proper form submission (Formspree, etc.)
-    // For now, prevent mailto and show success state as placeholder
+    const API_URL = 'https://ai-course-api.winslowcj5.workers.dev';
+
     document.querySelectorAll('.cta-form').forEach(form => {
-      form.addEventListener('submit', function(e) {
+      form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        const email = form.querySelector('input[type="email"]').value;
+        const input = form.querySelector('input[type="email"]');
+        const btn = form.querySelector('.btn');
+        const email = input.value.trim();
         if (!email) return;
-        
-        // Hide form, show success
-        form.style.display = 'none';
-        const successEl = form.nextElementSibling.nextElementSibling || 
-                          form.parentElement.querySelector('.form-success');
-        if (successEl) successEl.classList.add('show');
-        
-        // Store in localStorage as backup
-        const signups = JSON.parse(localStorage.getItem('ai-course-signups') || '[]');
-        signups.push({ email, ts: new Date().toISOString() });
-        localStorage.setItem('ai-course-signups', JSON.stringify(signups));
-        
-        console.log('Signup:', email);
-        // TODO: POST to actual backend here
+
+        const successEl = form.parentElement.querySelector('.form-success');
+        const noteEl = form.nextElementSibling; // .form-note
+
+        btn.disabled = true;
+        btn.textContent = 'Signing up…';
+
+        try {
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+          const data = await res.json();
+
+          if (res.ok && data.ok) {
+            form.style.display = 'none';
+            if (noteEl) noteEl.style.display = 'none';
+            if (successEl) {
+              successEl.querySelector('p').textContent = '🎉 ' + data.message;
+              successEl.classList.add('show');
+            }
+          } else {
+            btn.disabled = false;
+            btn.textContent = 'Start the Free Course →';
+            alert(data.error || 'Something went wrong. Please try again.');
+          }
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Start the Free Course →';
+          alert('Network error — please try again.');
+        }
       });
     });
   </script>
