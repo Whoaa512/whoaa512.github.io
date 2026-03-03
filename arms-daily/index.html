@@ -61,6 +61,9 @@
   .timer-btn.active { border-color: var(--accent); color: var(--accent); }
   .timer-btn.start { background: var(--accent); border-color: var(--accent); color: white; font-weight: 600; }
   .timer-btn.stop { background: #333; border-color: #333; }
+  .timer-adj { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 8px; }
+  .adj-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #333; background: transparent; color: var(--dim); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .adj-btn:active { transform: scale(0.9); background: #333; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
   /* Rep input modal */
@@ -207,6 +210,19 @@ function stopTimer() {
   timerSeconds = 0;
 }
 
+function adjustTimer(delta) {
+  timerSeconds = Math.max(0, timerSeconds + delta);
+  if (!timerRunning && timerSeconds > 0) {
+    startTimer(timerSeconds);
+    return;
+  }
+  if (timerSeconds === 0 && timerRunning) {
+    stopTimer();
+    if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+  }
+  renderTimer();
+}
+
 function renderTimer() {
   const el = document.getElementById('timer-display');
   if (!el) return;
@@ -330,7 +346,11 @@ function render() {
     // Timer
     html += `<div class="timer-card">
       <div class="timer-label" id="timer-label">${timerRunning ? 'Resting...' : timerSeconds === 0 ? 'Rest timer' : ''}</div>
-      <div class="timer-display" id="timer-display">${formatTime(timerSeconds)}</div>
+      <div class="timer-adj">
+        <button class="adj-btn" onclick="adjustTimer(-15)">−15</button>
+        <div class="timer-display" id="timer-display">${formatTime(timerSeconds)}</div>
+        <button class="adj-btn" onclick="adjustTimer(15)">+15</button>
+      </div>
       <div class="timer-buttons">`;
     for (const p of TIMER_PRESETS) {
       const label = p >= 60 ? `${p / 60}m` : `${p}s`;
