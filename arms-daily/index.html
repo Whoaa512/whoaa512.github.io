@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Arms Daily</title>
 <style>
-  :root { --bg: #1a1a2e; --card: #16213e; --accent: #e94560; --text: #eee; --dim: #888; --green: #4ade80; }
+  :root { --bg: #1a1a2e; --card: #16213e; --accent: #e94560; --text: #eee; --dim: #888; --green: #4ade80; --yellow: #fbbf24; --red: #f87171; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
   .container { max-width: 420px; margin: 0 auto; }
@@ -24,10 +24,12 @@
   .ex-name a { color: var(--text); text-decoration: underline; text-decoration-color: #444; text-underline-offset: 3px; }
   .ex-name a:hover { text-decoration-color: var(--accent); }
   .ex-detail { color: var(--dim); font-size: 0.8rem; margin-bottom: 8px; }
-  .sets { display: flex; gap: 8px; }
-  .set-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #333; background: transparent; color: var(--text); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+  .sets { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .set-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #333; background: transparent; color: var(--text); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; position: relative; }
   .set-btn.done { background: var(--green); border-color: var(--green); color: #1a1a2e; }
+  .set-btn.partial { background: var(--yellow); border-color: var(--yellow); color: #1a1a2e; }
   .set-btn:active { transform: scale(0.9); }
+  .set-reps { font-size: 0.6rem; opacity: 0.8; }
   .complete-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--accent); color: white; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
   .complete-btn:disabled { opacity: 0.3; cursor: default; }
   .complete-btn:not(:disabled):active { transform: scale(0.98); }
@@ -46,10 +48,42 @@
   .done-banner .check { font-size: 3rem; margin-bottom: 8px; }
   .done-banner .msg { font-size: 1.1rem; font-weight: 600; }
   .done-banner .sub { color: var(--dim); font-size: 0.85rem; margin-top: 4px; }
+
+  /* Timer */
+  .timer-card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center; }
+  .timer-display { font-size: 3rem; font-weight: 700; font-variant-numeric: tabular-nums; margin: 8px 0; }
+  .timer-display.warning { color: var(--yellow); }
+  .timer-display.ready { color: var(--green); animation: pulse 1s infinite; }
+  .timer-label { color: var(--dim); font-size: 0.8rem; margin-bottom: 8px; }
+  .timer-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+  .timer-btn { padding: 8px 16px; border: 1px solid #333; border-radius: 8px; background: transparent; color: var(--text); font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+  .timer-btn:active { transform: scale(0.95); }
+  .timer-btn.active { border-color: var(--accent); color: var(--accent); }
+  .timer-btn.start { background: var(--accent); border-color: var(--accent); color: white; font-weight: 600; }
+  .timer-btn.stop { background: #333; border-color: #333; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* Rep input modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .modal { background: var(--card); border-radius: 16px; padding: 24px; width: 300px; text-align: center; }
+  .modal h3 { font-size: 1.1rem; margin-bottom: 4px; }
+  .modal .modal-sub { color: var(--dim); font-size: 0.8rem; margin-bottom: 16px; }
+  .rep-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
+  .rep-btn { width: 48px; height: 48px; border-radius: 12px; border: 2px solid #333; background: transparent; color: var(--text); font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .rep-btn:active { transform: scale(0.9); }
+  .rep-btn.target { border-color: var(--green); color: var(--green); }
+  .modal-cancel { background: none; border: none; color: var(--dim); font-size: 0.85rem; cursor: pointer; padding: 8px; }
+  .modal-cancel:hover { color: var(--text); }
+
+  /* Weight suggestion */
+  .weight-hint { text-align: center; font-size: 0.8rem; padding: 8px 12px; margin-bottom: 16px; border-radius: 8px; }
+  .weight-hint.down { background: rgba(248,113,113,0.15); color: var(--red); }
+  .weight-hint.up { background: rgba(74,222,128,0.15); color: var(--green); }
 </style>
 </head>
 <body>
 <div class="container" id="app"></div>
+<div id="modal-root"></div>
 <script>
 const DAYS = [
   { letter: 'A', label: 'Push', exercises: [
@@ -66,6 +100,8 @@ const DAYS = [
   ]}
 ];
 
+const TIMER_PRESETS = [60, 90, 120];
+
 const store = {
   get() {
     try { return JSON.parse(localStorage.getItem('arms-daily') || '{}'); } catch { return {}; }
@@ -75,18 +111,27 @@ const store = {
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
+let timerInterval = null;
+let timerSeconds = 0;
+let timerTarget = 90;
+let timerRunning = false;
+let pendingSetKey = null;
+let pendingSetReps = null;
+
 function getState() {
   const d = store.get();
   if (!d.weight) d.weight = 15;
   if (!d.log) d.log = {};
   if (!d.nextDay) d.nextDay = 0;
   if (!d.todaySets) d.todaySets = {};
+  if (!d.setReps) d.setReps = {};
+  if (!d.history) d.history = {};
   if (d.todayDate !== today()) {
-    // New day: advance if yesterday was completed
     if (d.todayCompleted) {
       d.nextDay = (d.nextDay + 1) % 3;
     }
     d.todaySets = {};
+    d.setReps = {};
     d.todayCompleted = false;
     d.todayDate = today();
   }
@@ -97,17 +142,164 @@ function getState() {
 function getStreak(d) {
   let streak = 0;
   const t = new Date();
-  // If today is done, count it
   if (d.log[today()]) { streak++; t.setDate(t.getDate() - 1); }
-  else { t.setDate(t.getDate() - 1); } // check from yesterday
+  else { t.setDate(t.getDate() - 1); }
   for (let i = 0; i < 365; i++) {
     const key = t.toISOString().slice(0, 10);
     const dow = t.getDay();
-    if (dow === 0 || dow === 6) { t.setDate(t.getDate() - 1); continue; } // skip weekends
+    if (dow === 0 || dow === 6) { t.setDate(t.getDate() - 1); continue; }
     if (d.log[key]) { streak++; t.setDate(t.getDate() - 1); }
     else break;
   }
   return streak;
+}
+
+function getWeightHint(d) {
+  const entries = Object.entries(d.history || {}).sort((a, b) => b[0].localeCompare(a[0]));
+  const recent = entries.slice(0, 3);
+  if (recent.length < 2) return null;
+
+  let totalMissed = 0;
+  let totalSets = 0;
+  let allHitTarget = true;
+
+  for (const [, session] of recent) {
+    if (!session.sets) continue;
+    for (const s of session.sets) {
+      totalSets++;
+      if (s.actual < s.target) {
+        totalMissed++;
+        allHitTarget = false;
+      }
+    }
+  }
+
+  if (totalSets === 0) return null;
+  const missRate = totalMissed / totalSets;
+  if (missRate > 0.4) return { dir: 'down', msg: `Missed reps in ${Math.round(missRate * 100)}% of recent sets — consider dropping 2.5 lbs` };
+  if (allHitTarget && recent.length >= 3) return { dir: 'up', msg: 'Hit all reps in last 3 sessions — consider bumping up 2.5 lbs' };
+  return null;
+}
+
+function startTimer(secs) {
+  stopTimer();
+  timerTarget = secs;
+  timerSeconds = secs;
+  timerRunning = true;
+  render();
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    if (timerSeconds <= 0) {
+      timerSeconds = 0;
+      timerRunning = false;
+      clearInterval(timerInterval);
+      timerInterval = null;
+      if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+    }
+    renderTimer();
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  timerRunning = false;
+  timerSeconds = 0;
+}
+
+function renderTimer() {
+  const el = document.getElementById('timer-display');
+  if (!el) return;
+  const m = Math.floor(timerSeconds / 60);
+  const s = timerSeconds % 60;
+  el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  el.className = 'timer-display' + (timerSeconds === 0 && !timerRunning ? ' ready' : timerSeconds <= 10 && timerRunning ? ' warning' : '');
+
+  const label = document.getElementById('timer-label');
+  if (label) {
+    if (timerSeconds === 0 && !timerRunning && timerTarget > 0) label.textContent = 'Rest complete — go!';
+    else if (timerRunning) label.textContent = 'Resting...';
+    else label.textContent = 'Rest timer';
+  }
+}
+
+function showRepModal(key, targetReps) {
+  pendingSetKey = key;
+  pendingSetReps = targetReps;
+  const root = document.getElementById('modal-root');
+  let html = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <h3>How many reps?</h3>
+      <div class="modal-sub">Set ${parseInt(key.split('-')[1]) + 1} — target: ${targetReps}</div>
+      <div class="rep-grid">`;
+  for (let r = 1; r <= targetReps + 2; r++) {
+    html += `<button class="rep-btn ${r === targetReps ? 'target' : ''}" onclick="confirmReps(${r})">${r}</button>`;
+  }
+  html += `</div><button class="modal-cancel" onclick="closeModal()">Cancel</button></div></div>`;
+  root.innerHTML = html;
+}
+
+function closeModal() {
+  pendingSetKey = null;
+  pendingSetReps = null;
+  document.getElementById('modal-root').innerHTML = '';
+}
+
+function confirmReps(reps) {
+  const d = getState();
+  const key = pendingSetKey;
+  const target = pendingSetReps;
+  d.todaySets[key] = true;
+  d.setReps[key] = { actual: reps, target };
+  store.save(d);
+  closeModal();
+  startTimer(timerTarget || 90);
+  render();
+}
+
+function toggleSet(key, targetReps) {
+  const d = getState();
+  if (d.todaySets[key]) {
+    d.todaySets[key] = false;
+    delete d.setReps[key];
+    store.save(d);
+    render();
+    return;
+  }
+  showRepModal(key, targetReps);
+}
+
+function completeDay() {
+  const d = getState();
+  d.todayCompleted = true;
+  d.log[today()] = DAYS[d.nextDay].letter;
+
+  const day = DAYS[d.nextDay];
+  const sets = [];
+  day.exercises.forEach((ex, ei) => {
+    for (let s = 0; s < ex.sets; s++) {
+      const key = `${ei}-${s}`;
+      const rep = d.setReps[key];
+      sets.push({
+        exercise: ex.name,
+        set: s + 1,
+        actual: rep ? rep.actual : ex.reps,
+        target: ex.reps,
+        weight: d.weight
+      });
+    }
+  });
+  d.history[today()] = { day: DAYS[d.nextDay].letter, weight: d.weight, sets };
+
+  store.save(d);
+  stopTimer();
+  render();
+}
+
+function setWeight(v) {
+  const d = getState();
+  d.weight = parseFloat(v) || 15;
+  store.save(d);
 }
 
 function render() {
@@ -115,6 +307,7 @@ function render() {
   const day = DAYS[d.nextDay];
   const streak = getStreak(d);
   const allDone = d.todayCompleted;
+  const hint = getWeightHint(d);
 
   let html = `<h1>💪 Arms Daily</h1><p class="subtitle">Desk dumbbell protocol</p>`;
 
@@ -129,12 +322,50 @@ function render() {
     <input type="number" class="weight-input" value="${d.weight}" min="5" max="100" step="2.5" onchange="setWeight(this.value)"> lbs
   </div>`;
 
+  if (hint) {
+    html += `<div class="weight-hint ${hint.dir}">${hint.dir === 'down' ? '⬇️' : '⬆️'} ${hint.msg}</div>`;
+  }
+
+  if (!allDone) {
+    // Timer
+    html += `<div class="timer-card">
+      <div class="timer-label" id="timer-label">${timerRunning ? 'Resting...' : timerSeconds === 0 ? 'Rest timer' : ''}</div>
+      <div class="timer-display" id="timer-display">${formatTime(timerSeconds)}</div>
+      <div class="timer-buttons">`;
+    for (const p of TIMER_PRESETS) {
+      const label = p >= 60 ? `${p / 60}m` : `${p}s`;
+      if (timerRunning) {
+        html += `<button class="timer-btn stop" onclick="stopTimer();render()">Stop</button>`;
+        break;
+      } else {
+        html += `<button class="timer-btn ${timerTarget === p && !timerRunning ? 'active' : ''}" onclick="startTimer(${p})">${label}</button>`;
+      }
+    }
+    if (!timerRunning) {
+      html += `<button class="timer-btn" onclick="startTimer(timerTarget || 90)">▶</button>`;
+    }
+    html += `</div></div>`;
+  }
+
   if (allDone) {
     html += `<div class="day-card done-banner">
       <div class="check">✅</div>
       <div class="msg">Day ${day.letter} complete!</div>
       <div class="sub">Next up: Day ${DAYS[(d.nextDay + 1) % 3].letter} (${DAYS[(d.nextDay + 1) % 3].label}) tomorrow</div>
     </div>`;
+
+    const session = d.history[today()];
+    if (session && session.sets) {
+      html += `<div class="day-card"><div class="day-header"><span class="day-letter">Session Summary</span></div>`;
+      session.sets.forEach(s => {
+        const hit = s.actual >= s.target;
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:0.85rem;">
+          <span>${s.exercise} #${s.set}</span>
+          <span style="color:${hit ? 'var(--green)' : 'var(--yellow)'}">${s.actual}/${s.target} reps</span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
   } else {
     html += `<div class="day-card">
       <div class="day-header">
@@ -151,9 +382,15 @@ function render() {
       for (let s = 0; s < ex.sets; s++) {
         const key = `${ei}-${s}`;
         const done = d.todaySets[key];
+        const repInfo = d.setReps[key];
         totalSets++;
         if (done) doneSets++;
-        html += `<button class="set-btn ${done ? 'done' : ''}" onclick="toggleSet('${key}')">${s + 1}</button>`;
+        const isPartial = repInfo && repInfo.actual < repInfo.target;
+        const cls = done ? (isPartial ? 'partial' : 'done') : '';
+        const label = repInfo ? repInfo.actual : (s + 1);
+        html += `<button class="set-btn ${cls}" onclick="toggleSet('${key}', ${ex.reps})">
+          ${done ? '✓' : s + 1}${repInfo ? `<span class="set-reps">${repInfo.actual}r</span>` : ''}
+        </button>`;
       }
       html += `</div></div>`;
     });
@@ -181,30 +418,15 @@ function render() {
   }
   html += `</div></div>`;
 
-  html += `<p class="tip">Rest 60-90s between sets. Slow 3-second negatives. When all reps feel easy, bump the weight.</p>`;
+  html += `<p class="tip">Tap a set → enter reps completed. Timer auto-starts after each set. Yellow = missed target reps.</p>`;
 
   document.getElementById('app').innerHTML = html;
 }
 
-function toggleSet(key) {
-  const d = getState();
-  d.todaySets[key] = !d.todaySets[key];
-  store.save(d);
-  render();
-}
-
-function completeDay() {
-  const d = getState();
-  d.todayCompleted = true;
-  d.log[today()] = DAYS[d.nextDay].letter;
-  store.save(d);
-  render();
-}
-
-function setWeight(v) {
-  const d = getState();
-  d.weight = parseFloat(v) || 15;
-  store.save(d);
+function formatTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 render();
