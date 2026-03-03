@@ -21,6 +21,8 @@
   .exercise { margin-bottom: 14px; }
   .exercise:last-child { margin-bottom: 0; }
   .ex-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; }
+  .ex-name a { color: var(--text); text-decoration: underline; text-decoration-color: #444; text-underline-offset: 3px; }
+  .ex-name a:hover { text-decoration-color: var(--accent); }
   .ex-detail { color: var(--dim); font-size: 0.8rem; margin-bottom: 8px; }
   .sets { display: flex; gap: 8px; }
   .set-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #333; background: transparent; color: var(--text); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -51,16 +53,16 @@
 <script>
 const DAYS = [
   { letter: 'A', label: 'Push', exercises: [
-    { name: 'Overhead Press', sets: 3, reps: 10 },
-    { name: 'Tricep Kickbacks', sets: 3, reps: 12 }
+    { name: 'Overhead Press', sets: 3, reps: 10, url: 'https://exrx.net/WeightExercises/DeltoidAnterior/DBShoulderPress' },
+    { name: 'Tricep Kickbacks', sets: 3, reps: 12, url: 'https://exrx.net/WeightExercises/Triceps/DBKickback' }
   ]},
   { letter: 'B', label: 'Pull', exercises: [
-    { name: 'Curls', sets: 3, reps: 10 },
-    { name: 'Hammer Curls', sets: 3, reps: 12 }
+    { name: 'Curls', sets: 3, reps: 10, url: 'https://exrx.net/WeightExercises/BicepsBrachii/DBCurl' },
+    { name: 'Hammer Curls', sets: 3, reps: 12, url: 'https://exrx.net/WeightExercises/BicepsBrachii/DBHammerCurl' }
   ]},
   { letter: 'C', label: 'Shoulders & Arms', exercises: [
-    { name: 'Lateral Raises', sets: 3, reps: 12, note: 'Drop to 10 lbs if needed' },
-    { name: 'Overhead Tricep Extension', sets: 3, reps: 10 }
+    { name: 'Lateral Raises', sets: 3, reps: 12, note: 'Drop to 10 lbs if needed', url: 'https://exrx.net/WeightExercises/DeltoidLateral/DBLateralRaise' },
+    { name: 'Overhead Tricep Extension', sets: 3, reps: 10, url: 'https://exrx.net/WeightExercises/Triceps/DBOneArmTriExt' }
   ]}
 ];
 
@@ -142,7 +144,8 @@ function render() {
 
     let totalSets = 0, doneSets = 0;
     day.exercises.forEach((ex, ei) => {
-      html += `<div class="exercise"><div class="ex-name">${ex.name}</div>`;
+      const nameHtml = ex.url ? `<a href="${ex.url}" target="_blank">${ex.name}</a>` : ex.name;
+      html += `<div class="exercise"><div class="ex-name">${nameHtml}</div>`;
       html += `<div class="ex-detail">${ex.sets} × ${ex.reps} reps${ex.note ? ' · ' + ex.note : ''} · 3s negatives</div>`;
       html += `<div class="sets">`;
       for (let s = 0; s < ex.sets; s++) {
