@@ -89,9 +89,6 @@
   .modal-cancel:hover { color: var(--text); }
 
   /* Weight suggestion */
-  .weight-hint { text-align: center; font-size: 0.8rem; padding: 8px 12px; margin-bottom: 16px; border-radius: 8px; }
-  .weight-hint.down { background: rgba(248,113,113,0.15); color: var(--red); }
-  .weight-hint.up { background: rgba(74,222,128,0.15); color: var(--green); }
 </style>
 </head>
 <body>
@@ -139,7 +136,12 @@ let pendingSetReps = null;
 
 function getState() {
   const d = store.get();
-  if (!d.weight) d.weight = 15;
+  if (!d.weights) {
+    d.weights = {};
+    const fallback = d.weight || 15;
+    DAYS.forEach(day => day.exercises.forEach(ex => { d.weights[ex.name] = fallback; }));
+    delete d.weight;
+  }
   if (!d.log) d.log = {};
   if (!d.nextDay) d.nextDay = 0;
   if (!d.todaySets) d.todaySets = {};
@@ -173,31 +175,29 @@ function getStreak(d) {
   return streak;
 }
 
-function getWeightHint(d) {
-  const entries = Object.entries(d.history || {}).sort((a, b) => b[0].localeCompare(a[0]));
-  const recent = entries.slice(0, 3);
-  if (recent.length < 2) return null;
+function getWeightHints(d) {
+  const hints = {};
+  const entries = Object.entries(d.history || {}).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 5);
+  if (entries.length < 2) return hints;
 
-  let totalMissed = 0;
-  let totalSets = 0;
-  let allHitTarget = true;
-
-  for (const [, session] of recent) {
+  const byExercise = {};
+  for (const [, session] of entries) {
     if (!session.sets) continue;
     for (const s of session.sets) {
-      totalSets++;
-      if (s.actual < s.target) {
-        totalMissed++;
-        allHitTarget = false;
-      }
+      if (!byExercise[s.exercise]) byExercise[s.exercise] = [];
+      byExercise[s.exercise].push(s);
     }
   }
 
-  if (totalSets === 0) return null;
-  const missRate = totalMissed / totalSets;
-  if (missRate > 0.4) return { dir: 'down', msg: `Missed reps in ${Math.round(missRate * 100)}% of recent sets — consider dropping 2.5 lbs` };
-  if (allHitTarget && recent.length >= 3) return { dir: 'up', msg: 'Hit all reps in last 3 sessions — consider bumping up 2.5 lbs' };
-  return null;
+  for (const [name, sets] of Object.entries(byExercise)) {
+    if (sets.length < 3) continue;
+    const recent = sets.slice(0, 9);
+    const missed = recent.filter(s => s.actual < s.target).length;
+    const missRate = missed / recent.length;
+    if (missRate > 0.4) hints[name] = { dir: 'down', msg: 'Missed reps often — consider dropping 2.5 lbs' };
+    else if (missed === 0 && recent.length >= 6) hints[name] = { dir: 'up', msg: 'All reps hit — consider bumping up 2.5 lbs' };
+  }
+  return hints;
 }
 
 function startTimer(secs) {
@@ -317,20 +317,20 @@ function completeDay() {
         set: s + 1,
         actual: rep ? rep.actual : ex.reps,
         target: ex.reps,
-        weight: d.weight
+        weight: d.weights[ex.name] || 15
       });
     }
   });
-  d.history[today()] = { day: DAYS[d.nextDay].letter, weight: d.weight, sets };
+  d.history[today()] = { day: DAYS[d.nextDay].letter, sets };
 
   store.save(d);
   stopTimer();
   render();
 }
 
-function setWeight(v) {
+function setWeight(name, v) {
   const d = getState();
-  d.weight = parseFloat(v) || 15;
+  d.weights[name] = parseFloat(v) || 15;
   store.save(d);
 }
 
@@ -339,7 +339,7 @@ function render() {
   const day = DAYS[d.nextDay];
   const streak = getStreak(d);
   const allDone = d.todayCompleted;
-  const hint = getWeightHint(d);
+  const hints = getWeightHints(d);
 
   let html = `<h1>💪 Arms Daily</h1><p class="subtitle">Desk dumbbell protocol</p>`;
 
@@ -348,15 +348,6 @@ function render() {
     <div style="width:1px;height:32px;background:#333"></div>
     <div><span class="streak-num">${Object.keys(d.log).length}</span><div class="streak-label">total sessions</div></div>
   </div>`;
-
-  html += `<div class="weight-setting">
-    <label>Weight:</label>
-    <input type="number" class="weight-input" value="${d.weight}" min="5" max="100" step="2.5" onchange="setWeight(this.value)"> lbs
-  </div>`;
-
-  if (hint) {
-    html += `<div class="weight-hint ${hint.dir}">${hint.dir === 'down' ? '⬇️' : '⬆️'} ${hint.msg}</div>`;
-  }
 
   if (!allDone) {
     // Timer
@@ -397,7 +388,7 @@ function render() {
         const hit = s.actual >= s.target;
         html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:0.85rem;">
           <span>${s.exercise} #${s.set}</span>
-          <span style="color:${hit ? 'var(--green)' : 'var(--yellow)'}">${s.actual}/${s.target} reps</span>
+          <span style="color:${hit ? 'var(--green)' : 'var(--yellow)'}">${s.actual}/${s.target} @ ${s.weight}lbs</span>
         </div>`;
       });
       html += `</div>`;
@@ -420,6 +411,12 @@ function render() {
         html += `<a class="exrx-link" href="${ex.url}" target="_blank">📖 Full guide on ExRx.net ↗</a></ul>`;
       }
       html += `<div class="ex-detail">${ex.sets} × ${ex.reps} reps${ex.note ? ' · ' + ex.note : ''} · 3s negatives</div>`;
+      const exWeight = d.weights[ex.name] || 15;
+      const exHint = hints[ex.name];
+      html += `<div class="weight-setting" style="margin-bottom:8px;padding:8px;justify-content:flex-start;gap:8px;">
+        <input type="number" class="weight-input" value="${exWeight}" min="5" max="100" step="2.5" onchange="setWeight('${ex.name.replace(/'/g, "\\'")}',this.value)"> <label>lbs</label>
+        ${exHint ? `<span style="font-size:0.75rem;color:var(--${exHint.dir === 'down' ? 'red' : 'green'})">${exHint.dir === 'down' ? '⬇️' : '⬆️'} ${exHint.msg}</span>` : ''}
+      </div>`;
       html += `<div class="sets">`;
       for (let s = 0; s < ex.sets; s++) {
         const key = `${ei}-${s}`;
