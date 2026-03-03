@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arms Daily</title>
+<style>
+  :root { --bg: #1a1a2e; --card: #16213e; --accent: #e94560; --text: #eee; --dim: #888; --green: #4ade80; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
+  .container { max-width: 420px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; text-align: center; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: var(--dim); font-size: 0.85rem; margin-bottom: 24px; }
+  .streak-bar { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 24px; padding: 12px; background: var(--card); border-radius: 12px; }
+  .streak-num { font-size: 2rem; font-weight: 700; color: var(--accent); }
+  .streak-label { font-size: 0.8rem; color: var(--dim); }
+  .day-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .day-letter { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+  .day-label { color: var(--dim); font-size: 0.85rem; }
+  .exercise { margin-bottom: 14px; }
+  .exercise:last-child { margin-bottom: 0; }
+  .ex-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; }
+  .ex-detail { color: var(--dim); font-size: 0.8rem; margin-bottom: 8px; }
+  .sets { display: flex; gap: 8px; }
+  .set-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #333; background: transparent; color: var(--text); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+  .set-btn.done { background: var(--green); border-color: var(--green); color: #1a1a2e; }
+  .set-btn:active { transform: scale(0.9); }
+  .complete-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--accent); color: white; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+  .complete-btn:disabled { opacity: 0.3; cursor: default; }
+  .complete-btn:not(:disabled):active { transform: scale(0.98); }
+  .history { margin-top: 24px; }
+  .history h2 { font-size: 1rem; margin-bottom: 12px; color: var(--dim); }
+  .week-grid { display: flex; gap: 4px; margin-bottom: 8px; }
+  .week-dot { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--dim); }
+  .week-dot.done { background: var(--green); color: #1a1a2e; font-weight: 600; }
+  .week-dot.missed { background: #333; }
+  .week-dot.today { border: 2px solid var(--accent); }
+  .weight-setting { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; padding: 12px; background: var(--card); border-radius: 12px; }
+  .weight-setting label { color: var(--dim); font-size: 0.85rem; }
+  .weight-input { width: 60px; background: var(--bg); border: 1px solid #333; border-radius: 8px; color: var(--text); padding: 6px 10px; font-size: 1rem; text-align: center; }
+  .tip { color: var(--dim); font-size: 0.75rem; text-align: center; margin-top: 16px; line-height: 1.4; }
+  .done-banner { text-align: center; padding: 32px 20px; }
+  .done-banner .check { font-size: 3rem; margin-bottom: 8px; }
+  .done-banner .msg { font-size: 1.1rem; font-weight: 600; }
+  .done-banner .sub { color: var(--dim); font-size: 0.85rem; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+<script>
+const DAYS = [
+  { letter: 'A', label: 'Push', exercises: [
+    { name: 'Overhead Press', sets: 3, reps: 10 },
+    { name: 'Tricep Kickbacks', sets: 3, reps: 12 }
+  ]},
+  { letter: 'B', label: 'Pull', exercises: [
+    { name: 'Curls', sets: 3, reps: 10 },
+    { name: 'Hammer Curls', sets: 3, reps: 12 }
+  ]},
+  { letter: 'C', label: 'Shoulders & Arms', exercises: [
+    { name: 'Lateral Raises', sets: 3, reps: 12, note: 'Drop to 10 lbs if needed' },
+    { name: 'Overhead Tricep Extension', sets: 3, reps: 10 }
+  ]}
+];
+
+const store = {
+  get() {
+    try { return JSON.parse(localStorage.getItem('arms-daily') || '{}'); } catch { return {}; }
+  },
+  save(d) { localStorage.setItem('arms-daily', JSON.stringify(d)); }
+};
+
+function today() { return new Date().toISOString().slice(0, 10); }
+
+function getState() {
+  const d = store.get();
+  if (!d.weight) d.weight = 15;
+  if (!d.log) d.log = {};
+  if (!d.nextDay) d.nextDay = 0;
+  if (!d.todaySets) d.todaySets = {};
+  if (d.todayDate !== today()) {
+    // New day: advance if yesterday was completed
+    if (d.todayCompleted) {
+      d.nextDay = (d.nextDay + 1) % 3;
+    }
+    d.todaySets = {};
+    d.todayCompleted = false;
+    d.todayDate = today();
+  }
+  store.save(d);
+  return d;
+}
+
+function getStreak(d) {
+  let streak = 0;
+  const t = new Date();
+  // If today is done, count it
+  if (d.log[today()]) { streak++; t.setDate(t.getDate() - 1); }
+  else { t.setDate(t.getDate() - 1); } // check from yesterday
+  for (let i = 0; i < 365; i++) {
+    const key = t.toISOString().slice(0, 10);
+    const dow = t.getDay();
+    if (dow === 0 || dow === 6) { t.setDate(t.getDate() - 1); continue; } // skip weekends
+    if (d.log[key]) { streak++; t.setDate(t.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
+
+function render() {
+  const d = getState();
+  const day = DAYS[d.nextDay];
+  const streak = getStreak(d);
+  const allDone = d.todayCompleted;
+
+  let html = `<h1>💪 Arms Daily</h1><p class="subtitle">Desk dumbbell protocol</p>`;
+
+  html += `<div class="streak-bar">
+    <div><span class="streak-num">${streak}</span><div class="streak-label">day streak</div></div>
+    <div style="width:1px;height:32px;background:#333"></div>
+    <div><span class="streak-num">${Object.keys(d.log).length}</span><div class="streak-label">total sessions</div></div>
+  </div>`;
+
+  html += `<div class="weight-setting">
+    <label>Weight:</label>
+    <input type="number" class="weight-input" value="${d.weight}" min="5" max="100" step="2.5" onchange="setWeight(this.value)"> lbs
+  </div>`;
+
+  if (allDone) {
+    html += `<div class="day-card done-banner">
+      <div class="check">✅</div>
+      <div class="msg">Day ${day.letter} complete!</div>
+      <div class="sub">Next up: Day ${DAYS[(d.nextDay + 1) % 3].letter} (${DAYS[(d.nextDay + 1) % 3].label}) tomorrow</div>
+    </div>`;
+  } else {
+    html += `<div class="day-card">
+      <div class="day-header">
+        <span class="day-letter">Day ${day.letter}</span>
+        <span class="day-label">${day.label}</span>
+      </div>`;
+
+    let totalSets = 0, doneSets = 0;
+    day.exercises.forEach((ex, ei) => {
+      html += `<div class="exercise"><div class="ex-name">${ex.name}</div>`;
+      html += `<div class="ex-detail">${ex.sets} × ${ex.reps} reps${ex.note ? ' · ' + ex.note : ''} · 3s negatives</div>`;
+      html += `<div class="sets">`;
+      for (let s = 0; s < ex.sets; s++) {
+        const key = `${ei}-${s}`;
+        const done = d.todaySets[key];
+        totalSets++;
+        if (done) doneSets++;
+        html += `<button class="set-btn ${done ? 'done' : ''}" onclick="toggleSet('${key}')">${s + 1}</button>`;
+      }
+      html += `</div></div>`;
+    });
+
+    const canComplete = doneSets === totalSets;
+    html += `<button class="complete-btn" ${canComplete ? '' : 'disabled'} onclick="completeDay()">
+      ${canComplete ? '🎉 Mark Complete' : `${doneSets}/${totalSets} sets done`}
+    </button>`;
+    html += `</div>`;
+  }
+
+  // Week view
+  html += `<div class="history"><h2>This week</h2><div class="week-grid">`;
+  const now = new Date();
+  const mon = new Date(now);
+  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  const labels = ['M','T','W','T','F','S','S'];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(mon);
+    date.setDate(date.getDate() + i);
+    const key = date.toISOString().slice(0, 10);
+    const isToday = key === today();
+    const done = d.log[key];
+    html += `<div class="week-dot ${done ? 'done' : 'missed'} ${isToday ? 'today' : ''}">${done ? done : labels[i]}</div>`;
+  }
+  html += `</div></div>`;
+
+  html += `<p class="tip">Rest 60-90s between sets. Slow 3-second negatives. When all reps feel easy, bump the weight.</p>`;
+
+  document.getElementById('app').innerHTML = html;
+}
+
+function toggleSet(key) {
+  const d = getState();
+  d.todaySets[key] = !d.todaySets[key];
+  store.save(d);
+  render();
+}
+
+function completeDay() {
+  const d = getState();
+  d.todayCompleted = true;
+  d.log[today()] = DAYS[d.nextDay].letter;
+  store.save(d);
+  render();
+}
+
+function setWeight(v) {
+  const d = getState();
+  d.weight = parseFloat(v) || 15;
+  store.save(d);
+}
+
+render();
+</script>
+</body>
+</html>
