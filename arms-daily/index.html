@@ -64,6 +64,16 @@
   .timer-adj { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 8px; }
   .adj-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #333; background: transparent; color: var(--dim); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
   .adj-btn:active { transform: scale(0.9); background: #333; }
+
+  .ex-tips-toggle { background: none; border: 1px solid #333; border-radius: 6px; color: var(--dim); font-size: 0.7rem; padding: 2px 8px; cursor: pointer; margin-left: 8px; transition: all 0.15s; }
+  .ex-tips-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .ex-tips { display: none; margin: 8px 0; padding: 8px 12px; background: var(--bg); border-radius: 8px; border-left: 3px solid var(--accent); }
+  .ex-tips.open { display: block; }
+  .ex-tips li { color: var(--dim); font-size: 0.78rem; margin-bottom: 4px; list-style: none; padding-left: 12px; position: relative; line-height: 1.4; }
+  .ex-tips li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+  .ex-tips li:last-child { margin-bottom: 0; }
+  .ex-tips .exrx-link { display: inline-block; margin-top: 6px; font-size: 0.7rem; color: var(--accent); text-decoration: none; }
+  .ex-tips .exrx-link:hover { text-decoration: underline; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
   /* Rep input modal */
@@ -90,16 +100,22 @@
 <script>
 const DAYS = [
   { letter: 'A', label: 'Push', exercises: [
-    { name: 'Overhead Press', sets: 3, reps: 10, url: 'https://exrx.net/WeightExercises/DeltoidAnterior/DBShoulderPress' },
-    { name: 'Tricep Kickbacks', sets: 3, reps: 12, url: 'https://exrx.net/WeightExercises/Triceps/DBKickback' }
+    { name: 'Overhead Press', sets: 3, reps: 10, url: 'https://exrx.net/WeightExercises/DeltoidAnterior/DBShoulderPress',
+      tips: ['Sit or stand, dumbbells at shoulder height', 'Press straight up, full extension', 'Lower slowly (3s) to shoulders'] },
+    { name: 'Tricep Kickbacks', sets: 3, reps: 12, url: 'https://exrx.net/WeightExercises/Triceps/DBKickback',
+      tips: ['Hinge forward ~45°, upper arm parallel to floor', 'Extend forearm back, squeeze at top', 'Keep elbow pinned, lower slowly (3s)'] }
   ]},
   { letter: 'B', label: 'Pull', exercises: [
-    { name: 'Curls', sets: 3, reps: 10, url: 'https://exrx.net/WeightExercises/BicepsBrachii/DBCurl' },
-    { name: 'Hammer Curls', sets: 3, reps: 12, url: 'https://exrx.net/WeightExercises/BicepsBrachii/DBHammerCurl' }
+    { name: 'Curls', sets: 3, reps: 10, url: 'https://exrx.net/WeightExercises/BicepsBrachii/DBCurl',
+      tips: ['Stand tall, palms forward', 'Curl up without swinging', 'Lower slowly (3s), full extension at bottom'] },
+    { name: 'Hammer Curls', sets: 3, reps: 12, url: 'https://exrx.net/WeightExercises/BicepsBrachii/DBHammerCurl',
+      tips: ['Palms face each other (neutral grip)', 'Curl up keeping wrists neutral', 'Targets brachialis & forearms'] }
   ]},
   { letter: 'C', label: 'Shoulders & Arms', exercises: [
-    { name: 'Lateral Raises', sets: 3, reps: 12, note: 'Drop to 10 lbs if needed', url: 'https://exrx.net/WeightExercises/DeltoidLateral/DBLateralRaise' },
-    { name: 'Overhead Tricep Extension', sets: 3, reps: 10, url: 'https://exrx.net/WeightExercises/Triceps/DBOneArmTriExt' }
+    { name: 'Lateral Raises', sets: 3, reps: 12, note: 'Drop to 10 lbs if needed', url: 'https://exrx.net/WeightExercises/DeltoidLateral/DBLateralRaise',
+      tips: ['Slight bend in elbows, palms down', 'Raise to shoulder height, no higher', 'Control the descent — don\'t drop'] },
+    { name: 'Overhead Tricep Extension', sets: 3, reps: 10, url: 'https://exrx.net/WeightExercises/Triceps/DBOneArmTriExt',
+      tips: ['One dumbbell overhead, both hands or single arm', 'Lower behind head, elbows point up', 'Extend back up, squeeze tricep at top'] }
   ]}
 ];
 
@@ -396,7 +412,13 @@ function render() {
     let totalSets = 0, doneSets = 0;
     day.exercises.forEach((ex, ei) => {
       const nameHtml = ex.url ? `<a href="${ex.url}" target="_blank">${ex.name}</a>` : ex.name;
-      html += `<div class="exercise"><div class="ex-name">${nameHtml}</div>`;
+      const tipsId = `tips-${ei}`;
+      html += `<div class="exercise"><div class="ex-name">${nameHtml}<button class="ex-tips-toggle" onclick="document.getElementById('${tipsId}').classList.toggle('open');this.textContent=this.textContent==='form?'?'hide':'form?'">form?</button></div>`;
+      if (ex.tips) {
+        html += `<ul class="ex-tips" id="${tipsId}">`;
+        ex.tips.forEach(t => { html += `<li>${t}</li>`; });
+        html += `<a class="exrx-link" href="${ex.url}" target="_blank">📖 Full guide on ExRx.net ↗</a></ul>`;
+      }
       html += `<div class="ex-detail">${ex.sets} × ${ex.reps} reps${ex.note ? ' · ' + ex.note : ''} · 3s negatives</div>`;
       html += `<div class="sets">`;
       for (let s = 0; s < ex.sets; s++) {
