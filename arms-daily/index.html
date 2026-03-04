@@ -50,6 +50,11 @@
   .data-btn:hover { border-color: var(--accent); color: var(--accent); }
   .import-input { display: none; }
   .import-msg { text-align: center; font-size: 0.8rem; margin-top: 8px; }
+  .data-text { width: 100%; min-height: 80px; max-height: 200px; background: var(--bg); border: 1px solid #333; border-radius: 8px; color: var(--dim); font-size: 0.7rem; font-family: monospace; padding: 10px; margin-top: 8px; resize: vertical; }
+  .data-text-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+  .data-text-btn { padding: 6px 12px; border: 1px solid #333; border-radius: 6px; background: transparent; color: var(--dim); font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
+  .data-text-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .data-text-btn:active { transform: scale(0.95); }
   .done-banner { text-align: center; padding: 32px 20px; }
   .done-banner .check { font-size: 3rem; margin-bottom: 8px; }
   .done-banner .msg { font-size: 1.1rem; font-weight: 600; }
@@ -466,9 +471,14 @@ function render() {
   html += `<p class="tip">Tap a set → enter reps completed. Timer auto-starts after each set. Yellow = missed target reps.</p>`;
 
   html += `<div class="data-actions">
-    <button class="data-btn" onclick="exportData()">📤 Export Data</button>
-    <button class="data-btn" onclick="document.getElementById('import-file').click()">📥 Import Data</button>
+    <button class="data-btn" onclick="exportData()">📤 Export File</button>
+    <button class="data-btn" onclick="document.getElementById('import-file').click()">📥 Import File</button>
     <input type="file" id="import-file" class="import-input" accept=".json" onchange="importData(event)">
+  </div>
+  <textarea class="data-text" id="data-text" spellcheck="false" placeholder="Your data appears here — copy it, or paste data from another device and hit Load">${JSON.stringify(store.get())}</textarea>
+  <div class="data-text-actions">
+    <button class="data-text-btn" onclick="copyText()">📋 Copy</button>
+    <button class="data-text-btn" onclick="loadFromText()">📲 Load Pasted Data</button>
   </div>
   <div id="import-msg" class="import-msg"></div>`;
 
@@ -492,33 +502,66 @@ function exportData() {
   URL.revokeObjectURL(url);
 }
 
+function copyText() {
+  const el = document.getElementById('data-text');
+  el.select();
+  navigator.clipboard.writeText(el.value).then(() => {
+    showMsg('✅ Copied to clipboard', 'var(--green)');
+  }).catch(() => {
+    showMsg('⚠️ Copy failed — select and copy manually', 'var(--yellow)');
+  });
+}
+
+function loadFromText() {
+  const el = document.getElementById('data-text');
+  const raw = el.value.trim();
+  if (!raw) return showMsg('⚠️ Paste data first', 'var(--yellow)');
+  try {
+    const data = JSON.parse(raw);
+    if (!data.log && !data.history && !data.weights) {
+      return showMsg('⚠️ Invalid data — no Arms Daily fields found', 'var(--red)');
+    }
+    mergeData(data);
+    showMsg(`✅ Loaded! ${Object.keys(data.log || {}).length} sessions merged.`, 'var(--green)');
+    render();
+  } catch {
+    showMsg('⚠️ Could not parse — check the JSON', 'var(--red)');
+  }
+}
+
+function showMsg(text, color) {
+  const msg = document.getElementById('import-msg');
+  if (!msg) return;
+  msg.style.color = color;
+  msg.textContent = text;
+}
+
+function mergeData(data) {
+  const existing = store.get();
+  const merged = { ...existing };
+  merged.log = { ...existing.log, ...data.log };
+  merged.history = { ...existing.history, ...data.history };
+  merged.weights = { ...existing.weights, ...data.weights };
+  if (data.setReps) merged.setReps = { ...existing.setReps, ...data.setReps };
+  if (data.nextDay !== undefined) merged.nextDay = data.nextDay;
+  store.save(merged);
+}
+
 function importData(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const msg = document.getElementById('import-msg');
   const reader = new FileReader();
   reader.onload = function(ev) {
     try {
       const data = JSON.parse(ev.target.result);
       if (!data.log && !data.history && !data.weights) {
-        msg.style.color = 'var(--red)';
-        msg.textContent = '⚠️ Invalid file — no Arms Daily data found';
-        return;
+        return showMsg('⚠️ Invalid file — no Arms Daily data found', 'var(--red)');
       }
-      const existing = store.get();
-      const merged = { ...existing };
-      merged.log = { ...existing.log, ...data.log };
-      merged.history = { ...existing.history, ...data.history };
-      merged.weights = { ...existing.weights, ...data.weights };
-      if (data.setReps) merged.setReps = { ...existing.setReps, ...data.setReps };
-      if (data.nextDay !== undefined) merged.nextDay = data.nextDay;
-      store.save(merged);
-      msg.style.color = 'var(--green)';
-      msg.textContent = `✅ Imported! ${Object.keys(data.log || {}).length} sessions merged.`;
+      mergeData(data);
+      showMsg(`✅ Imported! ${Object.keys(data.log || {}).length} sessions merged.`, 'var(--green)');
       render();
     } catch {
-      msg.style.color = 'var(--red)';
-      msg.textContent = '⚠️ Could not parse file';
+      showMsg('⚠️ Could not parse file', 'var(--red)');
     }
     e.target.value = '';
   };
