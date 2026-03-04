@@ -44,6 +44,12 @@
   .weight-setting label { color: var(--dim); font-size: 0.85rem; }
   .weight-input { width: 60px; background: var(--bg); border: 1px solid #333; border-radius: 8px; color: var(--text); padding: 6px 10px; font-size: 1rem; text-align: center; }
   .tip { color: var(--dim); font-size: 0.75rem; text-align: center; margin-top: 16px; line-height: 1.4; }
+  .data-actions { display: flex; gap: 8px; justify-content: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #333; }
+  .data-btn { padding: 8px 16px; border: 1px solid #333; border-radius: 8px; background: transparent; color: var(--dim); font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+  .data-btn:active { transform: scale(0.95); }
+  .data-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .import-input { display: none; }
+  .import-msg { text-align: center; font-size: 0.8rem; margin-top: 8px; }
   .done-banner { text-align: center; padding: 32px 20px; }
   .done-banner .check { font-size: 3rem; margin-bottom: 8px; }
   .done-banner .msg { font-size: 1.1rem; font-weight: 600; }
@@ -459,6 +465,13 @@ function render() {
 
   html += `<p class="tip">Tap a set → enter reps completed. Timer auto-starts after each set. Yellow = missed target reps.</p>`;
 
+  html += `<div class="data-actions">
+    <button class="data-btn" onclick="exportData()">📤 Export Data</button>
+    <button class="data-btn" onclick="document.getElementById('import-file').click()">📥 Import Data</button>
+    <input type="file" id="import-file" class="import-input" accept=".json" onchange="importData(event)">
+  </div>
+  <div id="import-msg" class="import-msg"></div>`;
+
   document.getElementById('app').innerHTML = html;
 }
 
@@ -466,6 +479,50 @@ function formatTime(secs) {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function exportData() {
+  const d = store.get();
+  const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `arms-daily-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const msg = document.getElementById('import-msg');
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.log && !data.history && !data.weights) {
+        msg.style.color = 'var(--red)';
+        msg.textContent = '⚠️ Invalid file — no Arms Daily data found';
+        return;
+      }
+      const existing = store.get();
+      const merged = { ...existing };
+      merged.log = { ...existing.log, ...data.log };
+      merged.history = { ...existing.history, ...data.history };
+      merged.weights = { ...existing.weights, ...data.weights };
+      if (data.setReps) merged.setReps = { ...existing.setReps, ...data.setReps };
+      if (data.nextDay !== undefined) merged.nextDay = data.nextDay;
+      store.save(merged);
+      msg.style.color = 'var(--green)';
+      msg.textContent = `✅ Imported! ${Object.keys(data.log || {}).length} sessions merged.`;
+      render();
+    } catch {
+      msg.style.color = 'var(--red)';
+      msg.textContent = '⚠️ Could not parse file';
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 render();
