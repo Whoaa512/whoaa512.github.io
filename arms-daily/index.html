@@ -73,6 +73,10 @@
   .timer-btn.start { background: var(--accent); border-color: var(--accent); color: white; font-weight: 600; }
   .timer-btn.stop { background: #333; border-color: #333; }
   .timer-adj { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 8px; }
+  .timer-sound { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+  .timer-mute { padding: 6px 10px; border: 1px solid #333; border-radius: 8px; background: transparent; color: var(--dim); font-size: 0.75rem; cursor: pointer; }
+  .timer-mute.active { border-color: var(--accent); color: var(--accent); }
+  .timer-volume { width: 120px; accent-color: var(--accent); }
   .adj-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #333; background: transparent; color: var(--dim); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
   .adj-btn:active { transform: scale(0.9); background: #333; }
 
@@ -144,6 +148,9 @@ let timerTarget = 90;
 let timerRunning = false;
 let pendingSetKey = null;
 let pendingSetReps = null;
+let audioCtx = null;
+let soundEnabled = true;
+let soundVolume = 0.08;
 
 function getState() {
   const d = store.get();
@@ -211,6 +218,36 @@ function getWeightHints(d) {
   return hints;
 }
 
+function playGentleSound() {
+  if (!soundEnabled) return;
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    audioCtx = new Ctx();
+  }
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = 440;
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(soundVolume, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 1.15);
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  renderTimer();
+}
+
+function setSoundVolume(value) {
+  soundVolume = Math.min(0.2, Math.max(0, parseFloat(value)));
+}
+
 function startTimer(secs) {
   stopTimer();
   timerTarget = secs;
@@ -224,6 +261,7 @@ function startTimer(secs) {
       timerRunning = false;
       clearInterval(timerInterval);
       timerInterval = null;
+      playGentleSound();
       if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
     }
     renderTimer();
@@ -245,6 +283,7 @@ function adjustTimer(delta) {
   }
   if (timerSeconds === 0 && timerRunning) {
     stopTimer();
+    playGentleSound();
     if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
   }
   renderTimer();
@@ -382,7 +421,12 @@ function render() {
     if (!timerRunning) {
       html += `<button class="timer-btn" onclick="startTimer(timerTarget || 90)">▶</button>`;
     }
-    html += `</div></div>`;
+    html += `</div>
+      <div class="timer-sound">
+        <button class="timer-mute ${soundEnabled ? '' : 'active'}" onclick="toggleSound()">${soundEnabled ? '🔊 Sound' : '🔇 Muted'}</button>
+        <input class="timer-volume" type="range" min="0" max="0.2" step="0.01" value="${soundVolume}" oninput="setSoundVolume(this.value)">
+      </div>
+    </div>`;
   }
 
   if (allDone) {
