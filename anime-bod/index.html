@@ -91,19 +91,7 @@
     z-index: 0;
   }
 
-  body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: rgba(0,240,255,0.08);
-    box-shadow: 0 0 20px rgba(0,240,255,0.1);
-    animation: scanline 4s linear infinite;
-    pointer-events: none;
-    z-index: 1000;
-  }
+  body::after { display: none; }
 
   .app {
     max-width: 440px;
@@ -780,6 +768,22 @@
     pointer-events: none;
   }
 
+  /* === SYNC BADGE === */
+  .sync-badge {
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 3px 8px;
+    border: 1px solid var(--panel-edge);
+    background: var(--panel);
+    color: var(--dim);
+    display: inline-block;
+  }
+  .sync-badge.synced { border-color: var(--success); color: var(--success); }
+  .sync-badge.syncing { border-color: var(--cyan); color: var(--cyan); animation: glow-pulse 1s ease infinite; }
+  .sync-badge.error { border-color: var(--str); color: var(--str); }
+  .sync-badge.local { color: var(--dim); }
+
   /* === CORNER DECORATIONS === */
   .corner-tl, .corner-br {
     position: fixed;
@@ -800,6 +804,12 @@
 <div class="corner-br"></div>
 <div class="app" id="app"></div>
 <script>
+const SYNC_URL = 'https://anime-bod-sync.YOUR_SUBDOMAIN.workers.dev/api/sync';
+const params = new URLSearchParams(window.location.search);
+const USER_KEY = params.get('key');
+let syncState = USER_KEY ? 'local' : null;
+let syncDebounceTimer = null;
+
 const SPLITS = {
   push: { label: 'Push Day', tag: 'STRENGTH', stat: 'str', exercises: [
     { id: 'pike-pushups', name: 'Pike Push-ups', defaultSets: 3, defaultReps: 10 },
@@ -833,8 +843,76 @@ const store = {
       quests: {},
       settings: {}
     };
+  },
+  async sync() {
+    if (!USER_KEY) return;
+    try {
+      setSyncState('syncing');
+      await fetch(`${SYNC_URL}?key=${USER_KEY}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: localStorage.getItem('anime-bod')
+      });
+      setSyncState('synced');
+    } catch(e) { setSyncState('error'); }
+  },
+  async pull() {
+    if (!USER_KEY) return;
+    try {
+      setSyncState('syncing');
+      const res = await fetch(`${SYNC_URL}?key=${USER_KEY}`);
+      if (res.ok) {
+        const remote = await res.json();
+        const local = this.get();
+        const merged = mergeState(local, remote);
+        this.save(merged);
+      }
+      setSyncState('synced');
+    } catch(e) { setSyncState('error'); }
   }
 };
+
+function mergeState(local, remote) {
+  if (!remote || !remote.workouts) return local;
+  if (!local || !local.workouts) return remote;
+
+  const merged = JSON.parse(JSON.stringify(local));
+
+  Object.keys(remote.workouts).forEach(day => {
+    const rw = remote.workouts[day];
+    const lw = merged.workouts[day];
+    if (!lw) { merged.workouts[day] = rw; return; }
+    if (rw.completedAt && !lw.completedAt) { merged.workouts[day] = rw; return; }
+  });
+
+  Object.keys(remote.quests || {}).forEach(day => {
+    if (!merged.quests[day]) merged.quests[day] = remote.quests[day];
+  });
+
+  if (remote.player.xp > merged.player.xp) {
+    merged.player.xp = remote.player.xp;
+    merged.player.level = remote.player.level;
+  }
+  if ((remote.player.streak?.best || 0) > (merged.player.streak?.best || 0)) {
+    merged.player.streak.best = remote.player.streak.best;
+  }
+
+  return merged;
+}
+
+function setSyncState(state) {
+  syncState = state;
+  const el = document.getElementById('sync-badge');
+  if (!el) return;
+  el.className = 'sync-badge ' + state;
+  el.textContent = state === 'syncing' ? 'syncing...' : state === 'synced' ? 'synced' : state === 'error' ? 'offline' : 'local only';
+}
+
+function debouncedSync() {
+  if (!USER_KEY) return;
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(() => store.sync(), 2000);
+}
 
 function todayStr() {
   const d = new Date();
@@ -991,6 +1069,10 @@ function render() {
   h += `</div>`;
   h += `<div class="hud-level"><div class="hud-level-num">${level}</div><div class="hud-level-label">Level</div></div>`;
   h += `</div>`;
+  if (USER_KEY) {
+    const badgeLabel = syncState === 'syncing' ? 'syncing...' : syncState === 'synced' ? 'synced' : syncState === 'error' ? 'offline' : 'local only';
+    h += `<div style="text-align:right;margin-bottom:4px"><span id="sync-badge" class="sync-badge ${syncState || 'local'}">${badgeLabel}</span></div>`;
+  }
 
   // XP Bar
   h += `<div class="xp-wrap">`;
@@ -1121,6 +1203,7 @@ function toggleSet(ei, si) {
 
   store.save(d);
   render();
+  debouncedSync();
 }
 
 function completeWorkout() {
@@ -1149,9 +1232,12 @@ function completeWorkout() {
   if (leveled) {
     setTimeout(showLevelUp, 200);
   }
+
+  store.sync();
 }
 
 render();
+store.pull().then(() => render());
 </script>
 </body>
 </html>
