@@ -7,7 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a1a">
-<link rel="manifest" href="data:application/json,{}">
 <style>
   :root {
     --bg: #0a0a1a; --card: #141428; --accent: #ff6b9d; --accent2: #c084fc;
@@ -116,15 +115,17 @@ const store = {
       player: { name: 'Hero', xp: 0, level: 1, stats: { str: 0, agi: 0, end: 0 }, streak: { current: 0, best: 0, lastDate: null } },
       workouts: {},
       quests: {},
-      settings: { splitStart: todayStr() }
+      settings: {}
     };
   }
 };
 
-function todayStr() { return new Date().toISOString().slice(0, 10); }
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 
 function xpForLevel(n) { return 50 * n + 10 * n * n; }
-function xpForCurrentLevel(level) { return level <= 1 ? 0 : xpForLevel(level - 1); }
 
 function getCompletedCount(d) {
   return Object.values(d.workouts).filter(w => w.completedAt).length;
@@ -188,7 +189,7 @@ function calcStreak(d) {
   if (d.workouts[todayStr()]?.completedAt) { streak++; t.setDate(t.getDate() - 1); }
   else { t.setDate(t.getDate() - 1); }
   for (let i = 0; i < 365; i++) {
-    const key = t.toISOString().slice(0, 10);
+    const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
     const dow = t.getDay();
     if (dow === 0) { t.setDate(t.getDate() - 1); continue; }
     if (d.workouts[key]?.completedAt) { streak++; t.setDate(t.getDate() - 1); }
@@ -288,7 +289,7 @@ function render() {
       ex.sets.forEach((s, si) => {
         totalSets++;
         if (s.done) doneSets++;
-        h += `<button class="set-btn ${s.done ? 'done' : ''}" onclick="toggleSet(${ei},${si})">${cfg.defaultReps}</button>`;
+        h += `<button class="set-btn ${s.done ? 'done' : ''}" onclick="toggleSet(${ei},${si})">${si + 1}</button>`;
       });
       h += `</div></div>`;
     });
@@ -319,7 +320,7 @@ function render() {
   for (let i = 0; i < 7; i++) {
     const dt = new Date(mon);
     dt.setDate(dt.getDate() + i);
-    const dk = dt.toISOString().slice(0, 10);
+    const dk = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
     const isToday = dk === todayStr();
     const wk = d.workouts[dk];
     const done = wk?.completedAt;
@@ -348,12 +349,16 @@ function toggleSet(ei, si) {
   if (!wasDone) {
     awardXP(d, XP_SET);
     showXpPopup(XP_SET);
-
     const allExSets = w.exercises[ei].sets.every(s => s.done);
     if (allExSets) {
       awardXP(d, XP_EXERCISE);
       showXpPopup(XP_EXERCISE);
     }
+  } else {
+    const wasAllDone = w.exercises[ei].sets.filter((s, idx) => idx !== si).every(s => s.done);
+    if (wasAllDone) d.player.xp = Math.max(0, d.player.xp - XP_EXERCISE);
+    d.player.xp = Math.max(0, d.player.xp - XP_SET);
+    while (d.player.level > 1 && d.player.xp < xpForLevel(d.player.level - 1)) d.player.level--;
   }
 
   store.save(d);
