@@ -1,0 +1,13 @@
+{
+  "name": "anime-bod-sync",
+  "private": true,
+  "scripts": {
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240919.0",
+    "typescript": "^6.0.2",
+    "wrangler": "^3.78.0"
+  }
+}

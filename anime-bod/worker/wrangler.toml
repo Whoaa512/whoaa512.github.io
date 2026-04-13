@@ -1,0 +1,8 @@
+name = "anime-bod-sync"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "anime-bod-db"
+database_id = "TODO_AFTER_CREATE"
