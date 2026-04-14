@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ANIME PHYSIQUE // RPG</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#c4a882">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@400;700&display=swap');
+
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes xp-float {
+    0% { opacity: 1; transform: translate(-50%, 0) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -10px) scale(1.3); }
+    100% { opacity: 0; transform: translate(-50%, -60px) scale(1); }
+  }
+  @keyframes levelup-flash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes levelup-text {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    60% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  }
+  @keyframes stat-fill {
+    from { width: 0; }
+  }
+  @keyframes diamond-pop {
+    0% { transform: scale(0.8); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes quest-complete {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  @keyframes border-flow {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+  }
+  @keyframes wobble {
+    0%, 100% { transform: rotate(-1deg); }
+    50% { transform: rotate(1deg); }
+  }
+  @keyframes stamp-press {
+    0% { transform: scale(1.3) rotate(-5deg); opacity: 0; }
+    60% { transform: scale(0.95) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  :root {
+    --bg: #c4a882;
+    --panel: #fffef5;
+    --panel-edge: #e0d5c0;
+    --rose: #d4a0a0;
+    --sage: #8fac8f;
+    --corn: #7e9cc7;
+    --mustard: #c9a84c;
+    --text: #4a3f35;
+    --dim: #8a7e70;
+    --str: #c76e6e;
+    --agi: #6e8fc7;
+    --end: #6eaa6e;
+    --success: #6eaa6e;
+    --gold: #c9a84c;
+    --gold-dim: #a08530;
+    --ink: #3a3028;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Patrick Hand', 'Caveat', cursive, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle, #b09872 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after { display: none; }
+
+  .app {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 16px 14px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* === WASHI TAPE MIXIN === */
+  .washi {
+    position: relative;
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    color: #fff;
+    clip-path: polygon(2px 0, calc(100% - 3px) 1px, calc(100% - 1px) calc(100% - 2px), 1px calc(100% - 1px));
+  }
+  .washi-rose { background: rgba(212,160,160,0.75); }
+  .washi-sage { background: rgba(143,172,143,0.75); }
+  .washi-corn { background: rgba(126,156,199,0.75); }
+  .washi-mustard { background: rgba(201,168,76,0.75); }
+
+  /* === CHARACTER HUD === */
+  .hud {
+    padding: 12px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hud-avatar {
+    width: 52px;
+    height: 52px;
+    border: 3px solid var(--mustard);
+    border-radius: 50%;
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    font-weight: 900;
+    color: var(--mustard);
+  }
+
+  .hud-avatar::after {
+    content: '⭐';
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 0.9rem;
+    filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.2));
+  }
+
+  .hud-info { flex: 1; min-width: 0; }
+
+  .hud-title {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--dim);
+  }
+
+  .hud-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ink);
+    font-family: 'Caveat', cursive;
+    font-size: 1.5rem;
+  }
+
+  .hud-class {
+    font-size: 0.75rem;
+    color: var(--dim);
+    letter-spacing: 1px;
+  }
+
+  .hud-level {
+    text-align: center;
+    flex-shrink: 0;
+    background: var(--panel);
+    border: 2px dashed var(--mustard);
+    border-radius: 12px;
+    padding: 6px 12px;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.08);
+    transform: rotate(2deg);
+  }
+
+  .hud-level-num {
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--mustard);
+    font-family: 'Caveat', cursive;
+  }
+
+  .hud-level-label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--dim);
+  }
+
+  /* === XP BAR (thermometer) === */
+  .xp-wrap {
+    position: relative;
+    margin-bottom: 16px;
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 10px 14px;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
+    transform: rotate(-0.5deg);
+  }
+
+  .xp-track {
+    height: 14px;
+    background: #f0ebe0;
+    border: 2px solid var(--panel-edge);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mustard), #dbb855);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border-radius: 8px;
+  }
+
+  .xp-fill::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 1px;
+    width: 10px;
+    height: 10px;
+    background: var(--mustard);
+    border-radius: 50%;
+    border: 2px solid var(--panel);
+    box-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+  }
+
+  .xp-text {
+    font-size: 0.7rem;
+    color: var(--dim);
+    text-align: right;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* === STATS PANEL (habit stickers) === */
+  .stats-panel {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-block {
+    flex: 1;
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 12px 8px 10px;
+    position: relative;
+    text-align: center;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
+    border: 2px solid transparent;
+  }
+
+  .stat-block.str { border-color: var(--str); transform: rotate(-1.5deg); }
+  .stat-block.agi { border-color: var(--agi); transform: rotate(0.5deg); }
+  .stat-block.end { border-color: var(--end); transform: rotate(1deg); }
+
+  .stat-name {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+  }
+
+  .stat-block.str .stat-name { color: var(--str); }
+  .stat-block.agi .stat-name { color: var(--agi); }
+  .stat-block.end .stat-name { color: var(--end); }
+
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 6px;
+    font-family: 'Caveat', cursive;
+  }
+
+  .stat-block.str .stat-value { color: var(--str); }
+  .stat-block.agi .stat-value { color: var(--agi); }
+  .stat-block.end .stat-value { color: var(--end); }
+
+  .stat-bar-track {
+    height: 6px;
+    background: #f0ebe0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0 4px;
+  }
+
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    animation: stat-fill 1s ease-out;
+  }
+
+  .stat-block.str .stat-bar-fill { background: var(--str); }
+  .stat-block.agi .stat-bar-fill { background: var(--agi); }
+  .stat-block.end .stat-bar-fill { background: var(--end); }
+
+  /* === MISSION BRIEFING === */
+  .mission {
+    background: var(--panel);
+    border-radius: 4px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
+    transform: rotate(0.3deg);
+  }
+
+  .mission::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: rgba(126,156,199,0.65);
+    clip-path: polygon(2px 0, calc(100% - 1px) 2px, calc(100% - 3px) calc(100% - 1px), 0 calc(100% - 2px));
+  }
+
+  .mission-header {
+    padding: 4px 16px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .mission-tag {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-weight: 700;
+  }
+
+  .mission-tag::before {
+    content: '📌';
+    font-size: 0.8rem;
+  }
+
+  .mission-type {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 12px 16px 8px;
+    color: var(--ink);
+    font-family: 'Caveat', cursive;
+    font-size: 1.8rem;
+  }
+
+  .mission-progress {
+    padding: 0 16px 12px;
+    font-size: 0.75rem;
+    color: var(--dim);
+    letter-spacing: 1px;
+  }
+
+  .mission-progress span {
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  /* === SKILL CARDS (paper cutouts) === */
+  .skill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .skill-card {
+    background: var(--panel);
+    border: none;
+    padding: 14px 16px;
+    position: relative;
+    border-radius: 4px;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.08), 0 1px 0 var(--panel-edge);
+    animation: slide-in 0.3s ease backwards;
+    border-left: 4px solid var(--panel-edge);
+  }
+
+  .skill-card:nth-child(1) { animation-delay: 0.05s; transform: rotate(-0.5deg); border-left-color: var(--rose); }
+  .skill-card:nth-child(2) { animation-delay: 0.1s; transform: rotate(0.3deg); border-left-color: var(--corn); }
+  .skill-card:nth-child(3) { animation-delay: 0.15s; transform: rotate(-0.2deg); border-left-color: var(--sage); }
+
+  .skill-card.all-done {
+    border-left-color: var(--success);
+    background: linear-gradient(135deg, #f5fff5, var(--panel));
+  }
+
+  .skill-card.all-done::after {
+    content: '✓ done!';
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-size: 0.7rem;
+    color: var(--success);
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 0.9rem;
+  }
+
+  .skill-name {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    color: var(--ink);
+  }
+
+  .skill-video {
+    color: var(--corn);
+    text-decoration: none;
+    margin-left: 8px;
+    transition: all 0.2s;
+    display: inline-block;
+    vertical-align: middle;
+    opacity: 0.7;
+  }
+  .skill-video:active { transform: scale(1.2); opacity: 1; }
+
+  .skill-detail {
+    font-size: 0.7rem;
+    color: var(--dim);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  .skill-sets {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* === SET BUTTONS (hand-drawn circles) === */
+  .set-btn {
+    width: 42px;
+    height: 42px;
+    transform: none;
+    border: 3px solid var(--panel-edge);
+    background: var(--panel);
+    color: var(--dim);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-family: 'Patrick Hand', cursive;
+  }
+
+  .set-btn span {
+    transform: none;
+    display: block;
+  }
+
+  .set-btn:active {
+    transform: scale(0.85);
+  }
+
+  .set-btn.done {
+    background: var(--sage);
+    border-color: var(--end);
+    color: #fff;
+    box-shadow: 1px 2px 0 rgba(0,0,0,0.1);
+    animation: diamond-pop 0.3s ease;
+  }
+
+  .set-btn.done::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 2px dashed var(--end);
+    opacity: 0.3;
+    border-radius: 50%;
+  }
+
+  /* === COMPLETE BUTTON (stamp) === */
+  .complete-btn {
+    width: 100%;
+    padding: 18px;
+    border: 3px dashed var(--panel-edge);
+    background: var(--panel);
+    color: var(--dim);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: default;
+    border-radius: 14px;
+    transition: all 0.3s;
+    -webkit-tap-highlight-color: transparent;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Patrick Hand', cursive;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
+  }
+
+  .complete-btn.ready {
+    border: 3px solid var(--sage);
+    color: #fff;
+    cursor: pointer;
+    background: var(--sage);
+    box-shadow: 3px 4px 0 rgba(0,0,0,0.15);
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+  }
+
+  .complete-btn.ready::before {
+    content: '🌟';
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+  }
+
+  .complete-btn.ready::after {
+    content: '🌟';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+  }
+
+  .complete-btn.ready:active {
+    transform: scale(0.97);
+    box-shadow: 1px 2px 0 rgba(0,0,0,0.15);
+  }
+
+  /* === QUEST LOG (pen checklist) === */
+  .quest-log {
+    background: var(--panel);
+    border-radius: 4px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
+    transform: rotate(-0.4deg);
+  }
+
+  .quest-log::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 28px;
+    background: rgba(212,160,160,0.5);
+    clip-path: polygon(0 0, 100% 2px, calc(100% - 2px) calc(100% - 1px), 0 100%);
+  }
+
+  .quest-header {
+    padding: 12px 16px 8px 36px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--rose);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+  }
+
+  .quest-header::before {
+    content: '!';
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    align-items: center;
+    justify-content: center;
+    background: var(--rose);
+    color: #fff;
+    font-weight: 900;
+    font-size: 0.65rem;
+    border-radius: 50%;
+  }
+
+  .quest-item {
+    padding: 8px 16px 8px 36px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    border-top: 1px dashed #e8e0d0;
+    position: relative;
+  }
+
+  .quest-item:last-child {
+    padding-bottom: 12px;
+  }
+
+  .quest-diamond {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--panel-edge);
+    transform: none;
+    flex-shrink: 0;
+    transition: all 0.3s;
+    border-radius: 3px;
+  }
+
+  .quest-diamond.done {
+    background: var(--success);
+    border-color: var(--success);
+    position: relative;
+  }
+
+  .quest-diamond.done::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 900;
+  }
+
+  .quest-label { color: var(--text); }
+  .quest-label.done {
+    color: var(--dim);
+    text-decoration: line-through;
+    text-decoration-color: var(--dim);
+  }
+
+  /* === STREAK & TIMELINE === */
+  .timeline-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .streak-display {
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+    flex-shrink: 0;
+    width: 80px;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
+    border: 2px solid var(--corn);
+    transform: rotate(-1deg);
+  }
+
+  .streak-num {
+    font-size: 2.2rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--corn);
+    font-family: 'Caveat', cursive;
+  }
+
+  .streak-label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
+
+  .week-track {
+    flex: 1;
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 8px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
+    transform: rotate(0.3deg);
+  }
+
+  .week-cell {
+    flex: 1;
+    max-width: 40px;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: var(--dim);
+    background: #f5f0e5;
+    border: 2px solid #e8e0d0;
+    border-radius: 6px;
+    transition: all 0.3s;
+    font-weight: 700;
+  }
+
+  .week-cell.done {
+    background: var(--sage);
+    border-color: var(--sage);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .week-cell.today {
+    border-color: var(--corn);
+    color: var(--corn);
+    box-shadow: 0 0 0 2px rgba(126,156,199,0.2);
+  }
+
+  .week-cell.done.today {
+    border-color: var(--sage);
+    color: #fff;
+    box-shadow: 0 0 0 2px rgba(143,172,143,0.3);
+  }
+
+  /* === DONE BANNER === */
+  .done-banner {
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 28px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 3px 4px 0 rgba(0,0,0,0.1);
+    border: 3px solid var(--sage);
+    transform: rotate(-0.5deg);
+  }
+
+  .done-banner::before {
+    content: '🎉';
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    font-size: 1.2rem;
+  }
+
+  .done-banner::after {
+    content: '✨';
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-size: 1.2rem;
+  }
+
+  .done-status {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--success);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .done-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+    font-family: 'Caveat', cursive;
+  }
+
+  .done-xp {
+    font-size: 0.95rem;
+    color: var(--mustard);
+    font-weight: 700;
+  }
+
+  .done-next {
+    font-size: 0.75rem;
+    color: var(--dim);
+    margin-top: 8px;
+    letter-spacing: 1px;
+  }
+
+  /* === XP POPUP === */
+  .xp-popup {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--mustard);
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+    pointer-events: none;
+    animation: xp-float 1.2s ease forwards;
+    z-index: 100;
+    letter-spacing: 2px;
+    font-family: 'Caveat', cursive;
+  }
+
+  /* === LEVEL UP OVERLAY === */
+  .levelup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(201,168,76,0.2);
+    z-index: 200;
+    animation: levelup-flash 1.5s ease forwards;
+    pointer-events: none;
+  }
+
+  .levelup-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--mustard);
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.15);
+    z-index: 201;
+    animation: levelup-text 1.5s ease forwards;
+    pointer-events: none;
+    font-family: 'Caveat', cursive;
+  }
+
+  /* === SYNC BADGE === */
+  .sync-badge {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border: 1px solid var(--panel-edge);
+    background: var(--panel);
+    color: var(--dim);
+    display: inline-block;
+    border-radius: 10px;
+    font-family: 'Patrick Hand', cursive;
+  }
+  .sync-badge.synced { border-color: var(--success); color: var(--success); }
+  .sync-badge.syncing { border-color: var(--corn); color: var(--corn); animation: glow-pulse 1s ease infinite; }
+  .sync-badge.error { border-color: var(--str); color: var(--str); }
+  .sync-badge.local { color: var(--dim); }
+
+  /* === CORNER DECORATIONS (hidden for this theme) === */
+  .corner-tl, .corner-br { display: none; }
+</style>
+</head>
+<body>
+<div class="corner-tl"></div>
+<div class="corner-br"></div>
+<div class="app" id="app"></div>
+<script>
+const SYNC_URL = 'https://anime-bod-sync.winslowcj5.workers.dev/api/sync';
+const params = new URLSearchParams(window.location.search);
+const USER_KEY = params.get('key');
+let syncState = USER_KEY ? 'local' : null;
+let syncDebounceTimer = null;
+
+const VID = 'https://www.youtube.com/watch?v=3Zgrh5009_k';
+const SPLITS = {
+  push: { label: 'Push Day', tag: 'STRENGTH', stat: 'str', exercises: [
+    { id: 'pike-pushups', name: 'Pike Push-ups', defaultSets: 3, defaultReps: 10, video: `${VID}&t=188s` },
+    { id: 'decline-deficit-pushups', name: 'Decline Deficit Push-ups', defaultSets: 3, defaultReps: 12, video: `${VID}&t=265s` },
+    { id: 'dips', name: 'Dips', defaultSets: 3, defaultReps: 10, video: `${VID}&t=308s` }
+  ]},
+  pull: { label: 'Pull Day', tag: 'AGILITY', stat: 'agi', exercises: [
+    { id: 'pullups', name: 'Pull-ups', defaultSets: 3, defaultReps: 8, video: `${VID}&t=55s` },
+    { id: 'inverted-rows', name: 'Inverted Rows', defaultSets: 3, defaultReps: 12, video: `${VID}&t=125s` }
+  ]},
+  legs: { label: 'Legs Day', tag: 'ENDURANCE', stat: 'end', exercises: [
+    { id: 'pistol-squats', name: 'Pistol Squats', defaultSets: 3, defaultReps: 6, video: `${VID}&t=373s` },
+    { id: 'hip-hinges', name: 'Hip Hinges', defaultSets: 3, defaultReps: 12, video: `${VID}&t=411s` },
+    { id: 'dragonflies', name: 'Dragonflies', defaultSets: 3, defaultReps: 8, video: `${VID}&t=479s` }
+  ]}
+};
+const SPLIT_ORDER = ['push', 'pull', 'legs'];
+const XP_SET = 5, XP_EXERCISE = 15, XP_WORKOUT = 30;
+
+const store = {
+  get() {
+    try { return JSON.parse(localStorage.getItem('anime-bod') || 'null') || this.fresh(); }
+    catch { return this.fresh(); }
+  },
+  save(d) { localStorage.setItem('anime-bod', JSON.stringify(d)); },
+  fresh() {
+    return {
+      version: 1,
+      player: { name: 'Hero', xp: 0, level: 1, stats: { str: 0, agi: 0, end: 0 }, streak: { current: 0, best: 0, lastDate: null } },
+      workouts: {},
+      quests: {},
+      settings: {}
+    };
+  },
+  async sync() {
+    if (!USER_KEY) return;
+    try {
+      setSyncState('syncing');
+      await fetch(`${SYNC_URL}?key=${USER_KEY}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: localStorage.getItem('anime-bod')
+      });
+      setSyncState('synced');
+    } catch(e) { setSyncState('error'); }
+  },
+  async pull() {
+    if (!USER_KEY) return;
+    try {
+      setSyncState('syncing');
+      const res = await fetch(`${SYNC_URL}?key=${USER_KEY}`);
+      if (res.ok) {
+        const remote = await res.json();
+        const local = this.get();
+        const merged = mergeState(local, remote);
+        this.save(merged);
+      }
+      setSyncState('synced');
+    } catch(e) { setSyncState('error'); }
+  }
+};
+
+function mergeState(local, remote) {
+  if (!remote || !remote.workouts) return local;
+  if (!local || !local.workouts) return remote;
+
+  const merged = JSON.parse(JSON.stringify(local));
+
+  Object.keys(remote.workouts).forEach(day => {
+    const rw = remote.workouts[day];
+    const lw = merged.workouts[day];
+    if (!lw) { merged.workouts[day] = rw; return; }
+    if (rw.completedAt && !lw.completedAt) { merged.workouts[day] = rw; return; }
+  });
+
+  Object.keys(remote.quests || {}).forEach(day => {
+    if (!merged.quests[day]) merged.quests[day] = remote.quests[day];
+  });
+
+  if (remote.player.xp > merged.player.xp) {
+    merged.player.xp = remote.player.xp;
+    merged.player.level = remote.player.level;
+  }
+  if ((remote.player.streak?.best || 0) > (merged.player.streak?.best || 0)) {
+    merged.player.streak.best = remote.player.streak.best;
+  }
+
+  return merged;
+}
+
+function setSyncState(state) {
+  syncState = state;
+  const el = document.getElementById('sync-badge');
+  if (!el) return;
+  el.className = 'sync-badge ' + state;
+  el.textContent = state === 'syncing' ? 'syncing...' : state === 'synced' ? 'synced' : state === 'error' ? 'offline' : 'local only';
+}
+
+function debouncedSync() {
+  if (!USER_KEY) return;
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(() => store.sync(), 2000);
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function xpForLevel(n) { return 50 * n + 10 * n * n; }
+
+function getCompletedCount(d) {
+  return Object.values(d.workouts).filter(w => w.completedAt).length;
+}
+
+function getTodayType(d) {
+  return SPLIT_ORDER[getCompletedCount(d) % 3];
+}
+
+function ensureTodayWorkout(d) {
+  const key = todayStr();
+  if (d.workouts[key] && d.workouts[key].completedAt) return d;
+  const type = getTodayType(d);
+  if (!d.workouts[key] || d.workouts[key].type !== type) {
+    d.workouts[key] = {
+      type,
+      exercises: SPLITS[type].exercises.map(ex => ({
+        id: ex.id, sets: Array.from({ length: ex.defaultSets }, () => ({ done: false }))
+      })),
+      completedAt: null,
+      xpEarned: 0
+    };
+  }
+  return d;
+}
+
+function ensureTodayQuests(d) {
+  const key = todayStr();
+  if (d.quests[key]) return d;
+  const type = getTodayType(d);
+  const split = SPLITS[type];
+  const quests = [
+    { id: 'complete-workout', label: `Complete ${split.label}`, done: false },
+    { id: 'all-sets', label: 'Finish every set', done: false }
+  ];
+  if (type === 'push') quests.push({ id: 'pike-master', label: 'Complete all Pike Push-ups', done: false });
+  if (type === 'pull') quests.push({ id: 'pull-master', label: 'Complete all Pull-ups', done: false });
+  if (type === 'legs') quests.push({ id: 'pistol-master', label: 'Complete all Pistol Squats', done: false });
+  d.quests[key] = quests;
+  return d;
+}
+
+function updateQuests(d) {
+  const key = todayStr();
+  const w = d.workouts[key];
+  const q = d.quests[key];
+  if (!w || !q) return;
+  const allSetsDone = w.exercises.every(ex => ex.sets.every(s => s.done));
+  q.forEach(quest => {
+    if (quest.id === 'complete-workout') quest.done = !!w.completedAt;
+    if (quest.id === 'all-sets') quest.done = allSetsDone;
+    if (quest.id === 'pike-master') quest.done = w.exercises.find(e => e.id === 'pike-pushups')?.sets.every(s => s.done) || false;
+    if (quest.id === 'pull-master') quest.done = w.exercises.find(e => e.id === 'pullups')?.sets.every(s => s.done) || false;
+    if (quest.id === 'pistol-master') quest.done = w.exercises.find(e => e.id === 'pistol-squats')?.sets.every(s => s.done) || false;
+  });
+}
+
+function calcStreak(d) {
+  let streak = 0;
+  const t = new Date();
+  if (d.workouts[todayStr()]?.completedAt) { streak++; t.setDate(t.getDate() - 1); }
+  else { t.setDate(t.getDate() - 1); }
+  for (let i = 0; i < 365; i++) {
+    const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+    const dow = t.getDay();
+    if (dow === 0) { t.setDate(t.getDate() - 1); continue; }
+    if (d.workouts[key]?.completedAt) { streak++; t.setDate(t.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
+
+function calcStats(d) {
+  const stats = { str: 0, agi: 0, end: 0 };
+  Object.values(d.workouts).forEach(w => {
+    if (!w.completedAt) return;
+    const split = SPLITS[w.type];
+    if (!split) return;
+    const vol = w.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.done).length, 0);
+    stats[split.stat] += vol;
+  });
+  return stats;
+}
+
+function awardXP(d, amount) {
+  const oldLevel = d.player.level;
+  d.player.xp += amount;
+  while (d.player.xp >= xpForLevel(d.player.level)) {
+    d.player.level++;
+  }
+  return d.player.level > oldLevel;
+}
+
+let pendingXpPopup = 0;
+function showXpPopup(amount) {
+  pendingXpPopup += amount;
+  const el = document.createElement('div');
+  el.className = 'xp-popup';
+  el.textContent = `+${pendingXpPopup} XP`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+  setTimeout(() => { pendingXpPopup = 0; }, 100);
+}
+
+function showLevelUp() {
+  const flash = document.createElement('div');
+  flash.className = 'levelup-overlay';
+  document.body.appendChild(flash);
+  const txt = document.createElement('div');
+  txt.className = 'levelup-text';
+  txt.textContent = 'LEVEL UP';
+  document.body.appendChild(txt);
+  setTimeout(() => { flash.remove(); txt.remove(); }, 1500);
+}
+
+function render() {
+  const d = store.get();
+  ensureTodayWorkout(d);
+  ensureTodayQuests(d);
+  d.player.stats = calcStats(d);
+  d.player.streak.current = calcStreak(d);
+  if (d.player.streak.current > d.player.streak.best) d.player.streak.best = d.player.streak.current;
+  store.save(d);
+
+  const key = todayStr();
+  const w = d.workouts[key];
+  const type = w.type;
+  const split = SPLITS[type];
+  const streak = d.player.streak.current;
+  const level = d.player.level;
+  const prevLevelXp = level > 1 ? xpForLevel(level - 1) : 0;
+  const xpCur = d.player.xp - prevLevelXp;
+  const xpNeed = xpForLevel(level) - prevLevelXp;
+  const xpPct = Math.min(100, (xpCur / xpNeed) * 100);
+  const totalCompleted = getCompletedCount(d);
+  const maxStat = Math.max(d.player.stats.str, d.player.stats.agi, d.player.stats.end, 1);
+
+  let h = '';
+
+  // HUD
+  h += `<div class="hud">`;
+  h += `<div class="hud-avatar">${level}</div>`;
+  h += `<div class="hud-info">`;
+  h += `<div class="hud-title">Player Status</div>`;
+  h += `<div class="hud-name">Anime Physique</div>`;
+  h += `<div class="hud-class">${split.tag} // ${split.label.toUpperCase()}</div>`;
+  h += `</div>`;
+  h += `<div class="hud-level"><div class="hud-level-num">${level}</div><div class="hud-level-label">Level</div></div>`;
+  h += `</div>`;
+  if (USER_KEY) {
+    const badgeLabel = syncState === 'syncing' ? 'syncing...' : syncState === 'synced' ? 'synced' : syncState === 'error' ? 'offline' : 'local only';
+    h += `<div style="text-align:right;margin-bottom:4px"><span id="sync-badge" class="sync-badge ${syncState || 'local'}">${badgeLabel}</span></div>`;
+  }
+
+  // XP Bar
+  h += `<div class="xp-wrap">`;
+  h += `<div class="xp-track"><div class="xp-fill" style="width:${xpPct}%"></div></div>`;
+  h += `<div class="xp-text">${xpCur} / ${xpNeed} XP</div>`;
+  h += `</div>`;
+
+  // Stats
+  h += `<div class="stats-panel">`;
+  const statTips = { str: 'Levels up from Push days (Pike Push-ups, Dips, Decline Push-ups)', agi: 'Levels up from Pull days (Pull-ups, Inverted Rows)', end: 'Levels up from Legs days (Pistol Squats, Hip Hinges, Dragonflies)' };
+  ['str', 'agi', 'end'].forEach(s => {
+    const label = s.toUpperCase();
+    const val = d.player.stats[s];
+    const pct = Math.min(100, (val / maxStat) * 100);
+    h += `<div class="stat-block ${s}" title="${statTips[s]}">`;
+    h += `<div class="stat-name">${label}</div>`;
+    h += `<div class="stat-value">${val}</div>`;
+    h += `<div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%"></div></div>`;
+    h += `</div>`;
+  });
+  h += `</div>`;
+
+  if (w.completedAt) {
+    // Done state
+    const nextType = SPLIT_ORDER[totalCompleted % 3];
+    const nextSplit = SPLITS[nextType];
+    h += `<div class="done-banner">`;
+    h += `<div class="done-status">Mission Complete</div>`;
+    h += `<div class="done-title">${split.label}</div>`;
+    h += `<div class="done-xp">+${w.xpEarned} XP EARNED</div>`;
+    h += `<div class="done-next">NEXT MISSION // ${nextSplit.label.toUpperCase()}</div>`;
+    h += `</div>`;
+  } else {
+    // Mission header
+    let totalSets = 0, doneSets = 0;
+    w.exercises.forEach(ex => {
+      ex.sets.forEach(s => { totalSets++; if (s.done) doneSets++; });
+    });
+
+    h += `<div class="mission">`;
+    h += `<div class="mission-header"><span class="mission-tag">Today's Mission</span></div>`;
+    h += `<div class="mission-type">${split.label}</div>`;
+    h += `<div class="mission-progress"><span>${doneSets}</span> / ${totalSets} sets cleared</div>`;
+    h += `</div>`;
+
+    // Skill cards
+    h += `<div class="skill-list">`;
+    w.exercises.forEach((ex, ei) => {
+      const cfg = split.exercises[ei];
+      const allDone = ex.sets.every(s => s.done);
+      h += `<div class="skill-card ${allDone ? 'all-done' : ''}">`;
+      const vidIcon = `<svg viewBox="0 0 24 20" width="32" height="26" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="22" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/><polygon points="9,5.5 9,14.5 17,10" fill="currentColor"/></svg>`;
+      h += `<div class="skill-name">${cfg.name} ${cfg.video ? `<a href="${cfg.video}" target="_blank" class="skill-video">${vidIcon}</a>` : ''}</div>`;
+      h += `<div class="skill-detail">${cfg.defaultSets} SETS / ${cfg.defaultReps} REPS</div>`;
+      h += `<div class="skill-sets">`;
+      ex.sets.forEach((s, si) => {
+        h += `<button class="set-btn ${s.done ? 'done' : ''}" onclick="toggleSet(${ei},${si})"><span>${si + 1}</span></button>`;
+      });
+      h += `</div></div>`;
+    });
+    h += `</div>`;
+
+    // Complete button
+    const canComplete = doneSets === totalSets && totalSets > 0;
+    h += `<button class="complete-btn ${canComplete ? 'ready' : ''}" ${canComplete ? 'onclick="completeWorkout()"' : ''}>`;
+    h += canComplete ? 'Execute Mission' : `${doneSets} / ${totalSets} Sets`;
+    h += `</button>`;
+  }
+
+  // Quest log
+  updateQuests(d);
+  store.save(d);
+  const quests = d.quests[key] || [];
+  h += `<div class="quest-log">`;
+  h += `<div class="quest-header">Quest Log</div>`;
+  quests.forEach(q => {
+    h += `<div class="quest-item">`;
+    h += `<div class="quest-diamond ${q.done ? 'done' : ''}"></div>`;
+    h += `<span class="quest-label ${q.done ? 'done' : ''}">${q.label}</span>`;
+    h += `</div>`;
+  });
+  h += `</div>`;
+
+  // Timeline
+  h += `<div class="timeline-section">`;
+  h += `<div class="streak-display"><div class="streak-num">${streak}</div><div class="streak-label">Streak</div></div>`;
+  h += `<div class="week-track">`;
+  const now = new Date();
+  const mon = new Date(now);
+  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  const dayLabels = ['M','T','W','T','F','S','S'];
+  for (let i = 0; i < 7; i++) {
+    const dt = new Date(mon);
+    dt.setDate(dt.getDate() + i);
+    const dk = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    const isToday = dk === todayStr();
+    const wk = d.workouts[dk];
+    const done = wk?.completedAt;
+    h += `<div class="week-cell ${done ? 'done' : ''} ${isToday ? 'today' : ''}">${dayLabels[i]}</div>`;
+  }
+  h += `</div></div>`;
+
+  document.getElementById('app').innerHTML = h;
+}
+
+function toggleSet(ei, si) {
+  const d = store.get();
+  ensureTodayWorkout(d);
+  const w = d.workouts[todayStr()];
+  if (w.completedAt) return;
+
+  const set = w.exercises[ei].sets[si];
+  const wasDone = set.done;
+  set.done = !set.done;
+
+  if (!wasDone) {
+    awardXP(d, XP_SET);
+    showXpPopup(XP_SET);
+    const allExSets = w.exercises[ei].sets.every(s => s.done);
+    if (allExSets) {
+      awardXP(d, XP_EXERCISE);
+      showXpPopup(XP_EXERCISE);
+    }
+  } else {
+    const wasAllDone = w.exercises[ei].sets.filter((s, idx) => idx !== si).every(s => s.done);
+    if (wasAllDone) d.player.xp = Math.max(0, d.player.xp - XP_EXERCISE);
+    d.player.xp = Math.max(0, d.player.xp - XP_SET);
+    while (d.player.level > 1 && d.player.xp < xpForLevel(d.player.level - 1)) d.player.level--;
+  }
+
+  store.save(d);
+  render();
+  debouncedSync();
+}
+
+function completeWorkout() {
+  const d = store.get();
+  const key = todayStr();
+  const w = d.workouts[key];
+  if (w.completedAt) return;
+  if (!w.exercises.every(ex => ex.sets.every(s => s.done))) return;
+
+  let earned = XP_WORKOUT;
+  const streak = calcStreak(d) + 1;
+  earned += streak * 2;
+  w.xpEarned = (w.xpEarned || 0) + earned;
+  w.completedAt = new Date().toISOString();
+
+  const leveled = awardXP(d, earned);
+  showXpPopup(earned);
+
+  d.player.streak.current = streak;
+  if (streak > d.player.streak.best) d.player.streak.best = streak;
+  d.player.streak.lastDate = key;
+
+  store.save(d);
+  render();
+
+  if (leveled) {
+    setTimeout(showLevelUp, 200);
+  }
+
+  store.sync();
+}
+
+render();
+store.pull().then(() => render());
+</script>
+</body>
+</html>
