@@ -980,18 +980,16 @@ function getTodayType(d) {
 
 function ensureTodayWorkout(d) {
   const key = todayStr();
-  if (d.workouts[key] && d.workouts[key].completedAt) return d;
+  if (d.workouts[key]) return d;
   const type = getTodayType(d);
-  if (!d.workouts[key] || d.workouts[key].type !== type) {
-    d.workouts[key] = {
-      type,
-      exercises: SPLITS[type].exercises.map(ex => ({
-        id: ex.id, sets: Array.from({ length: ex.defaultSets }, () => ({ state: 'empty' }))
-      })),
-      completedAt: null,
-      xpEarned: 0
-    };
-  }
+  d.workouts[key] = {
+    type,
+    exercises: SPLITS[type].exercises.map(ex => ({
+      id: ex.id, sets: Array.from({ length: ex.defaultSets }, () => ({ state: 'empty' }))
+    })),
+    completedAt: null,
+    xpEarned: 0
+  };
   return d;
 }
 
