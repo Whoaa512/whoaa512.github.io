@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ANIME PHYSIQUE // RPG</title>
+<title>SCOUTER // POWER LEVEL TRACKER</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#c4a882">
+<meta name="theme-color" content="#0a1a0a">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
   @keyframes scanline {
     0% { transform: translateY(-100%); }
@@ -42,8 +42,8 @@
     100% { transform: scale(1); }
   }
   @keyframes slide-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
   }
   @keyframes quest-complete {
     0% { background-position: 0% 50%; }
@@ -53,288 +53,279 @@
     0% { background-position: 0% 0%; }
     100% { background-position: 200% 0%; }
   }
-  @keyframes wobble {
-    0%, 100% { transform: rotate(-1deg); }
-    50% { transform: rotate(1deg); }
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
   }
-  @keyframes stamp-press {
-    0% { transform: scale(1.3) rotate(-5deg); opacity: 0; }
-    60% { transform: scale(0.95) rotate(2deg); opacity: 1; }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  @keyframes reticle-rotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  @keyframes power-scan {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
   }
 
   :root {
-    --bg: #c4a882;
-    --panel: #fffef5;
-    --panel-edge: #e0d5c0;
-    --rose: #d4a0a0;
-    --sage: #8fac8f;
-    --corn: #7e9cc7;
-    --mustard: #c9a84c;
-    --text: #4a3f35;
-    --dim: #8a7e70;
-    --str: #c76e6e;
-    --agi: #6e8fc7;
-    --end: #6eaa6e;
-    --success: #6eaa6e;
-    --gold: #c9a84c;
-    --gold-dim: #a08530;
-    --ink: #3a3028;
+    --bg: #0a1a0a;
+    --panel: rgba(0, 30, 0, 0.6);
+    --panel-edge: #0f3f0f;
+    --green: #00ff41;
+    --green-dim: #00aa2a;
+    --green-dark: #004d15;
+    --red: #ff4444;
+    --text: #00ff41;
+    --dim: #2a6b2a;
+    --str: #00ff41;
+    --agi: #00ff41;
+    --end: #00ff41;
+    --success: #00ff41;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Patrick Hand', 'Caveat', cursive, system-ui, sans-serif;
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
     background: var(--bg);
+    background-image: radial-gradient(ellipse at 60% 40%, rgba(0, 40, 0, 0.4) 0%, transparent 60%);
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
     position: relative;
   }
 
+  /* Scanlines */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background:
-      radial-gradient(circle, #b09872 1px, transparent 1px);
-    background-size: 20px 20px;
-    opacity: 0.3;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 65, 0.02) 2px,
+      rgba(0, 255, 65, 0.02) 4px
+    );
     pointer-events: none;
-    z-index: 0;
+    z-index: 10;
   }
 
   body::after { display: none; }
 
+  /* Reticle */
+  .reticle {
+    position: fixed;
+    top: 35%;
+    left: 55%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.06;
+  }
+  .reticle::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--green);
+    border-radius: 50%;
+  }
+  .reticle::after {
+    content: '';
+    position: absolute;
+    inset: 40px;
+    border: 1px solid var(--green);
+    border-radius: 50%;
+  }
+  .reticle-inner {
+    position: absolute;
+    inset: 80px;
+    border: 1px solid var(--green);
+    border-radius: 50%;
+  }
+  .reticle-cross-h, .reticle-cross-v {
+    position: absolute;
+    background: var(--green);
+  }
+  .reticle-cross-h {
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+  }
+  .reticle-cross-v {
+    left: 50%;
+    top: 10%;
+    bottom: 10%;
+    width: 1px;
+  }
+
   .app {
-    max-width: 400px;
+    max-width: 420px;
     margin: 0 auto;
-    padding: 16px 14px 60px;
+    padding: 0 16px 60px;
     position: relative;
     z-index: 1;
   }
 
-  /* === WASHI TAPE MIXIN === */
-  .washi {
-    position: relative;
-    padding: 8px 16px;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    font-weight: 700;
-    color: #fff;
-    clip-path: polygon(2px 0, calc(100% - 3px) 1px, calc(100% - 1px) calc(100% - 2px), 1px calc(100% - 1px));
+  /* === CORNER HUD BRACKETS === */
+  .corner-tl, .corner-tr, .corner-bl, .corner-br {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    border-color: var(--green);
+    border-style: solid;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 2;
   }
-  .washi-rose { background: rgba(212,160,160,0.75); }
-  .washi-sage { background: rgba(143,172,143,0.75); }
-  .washi-corn { background: rgba(126,156,199,0.75); }
-  .washi-mustard { background: rgba(201,168,76,0.75); }
+  .corner-tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+  .corner-tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+  .corner-bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+  .corner-br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
 
-  /* === CHARACTER HUD === */
+  /* === POWER LEVEL HUD === */
   .hud {
-    padding: 12px 0 10px;
+    padding: 20px 0 8px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
-  }
-
-  .hud-avatar {
-    width: 52px;
-    height: 52px;
-    border: 3px solid var(--mustard);
-    border-radius: 50%;
-    background: var(--panel);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    flex-shrink: 0;
-    position: relative;
-    box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
-    font-weight: 900;
-    color: var(--mustard);
-  }
-
-  .hud-avatar::after {
-    content: '⭐';
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    font-size: 0.9rem;
-    filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.2));
   }
 
   .hud-info { flex: 1; min-width: 0; }
 
   .hud-title {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     color: var(--dim);
   }
 
   .hud-name {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--ink);
-    font-family: 'Caveat', cursive;
-    font-size: 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green);
+    opacity: 0.8;
   }
 
   .hud-class {
-    font-size: 0.75rem;
+    font-size: 0.6rem;
     color: var(--dim);
     letter-spacing: 1px;
+    margin-top: 2px;
   }
 
-  .hud-level {
-    text-align: center;
+  .power-level {
+    text-align: right;
     flex-shrink: 0;
-    background: var(--panel);
-    border: 2px dashed var(--mustard);
-    border-radius: 12px;
-    padding: 6px 12px;
-    box-shadow: 2px 2px 0 rgba(0,0,0,0.08);
-    transform: rotate(2deg);
   }
 
-  .hud-level-num {
-    font-size: 1.8rem;
-    font-weight: 900;
-    line-height: 1;
-    color: var(--mustard);
-    font-family: 'Caveat', cursive;
-  }
-
-  .hud-level-label {
-    font-size: 0.55rem;
+  .power-level-label {
+    font-size: 0.5rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     color: var(--dim);
+    text-align: right;
   }
 
-  /* === XP BAR (thermometer) === */
+  .power-level-num {
+    font-size: 2.8rem;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--green);
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.5), 0 0 40px rgba(0, 255, 65, 0.2);
+    animation: flicker 3s ease infinite;
+    letter-spacing: 2px;
+  }
+
+  /* === XP BAR === */
   .xp-wrap {
     position: relative;
     margin-bottom: 16px;
-    background: var(--panel);
-    border-radius: 14px;
-    padding: 10px 14px;
-    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
-    transform: rotate(-0.5deg);
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .xp-track {
-    height: 14px;
-    background: #f0ebe0;
-    border: 2px solid var(--panel-edge);
-    border-radius: 10px;
+    flex: 1;
+    height: 2px;
+    background: var(--green-dark);
     overflow: hidden;
     position: relative;
   }
 
   .xp-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--mustard), #dbb855);
+    background: var(--green);
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    border-radius: 8px;
-  }
-
-  .xp-fill::after {
-    content: '';
-    position: absolute;
-    right: -3px;
-    top: 1px;
-    width: 10px;
-    height: 10px;
-    background: var(--mustard);
-    border-radius: 50%;
-    border: 2px solid var(--panel);
-    box-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+    box-shadow: 0 0 6px rgba(0, 255, 65, 0.6);
   }
 
   .xp-text {
-    font-size: 0.7rem;
+    font-size: 0.55rem;
     color: var(--dim);
-    text-align: right;
-    margin-top: 4px;
     letter-spacing: 1px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
-  /* === STATS PANEL (habit stickers) === */
+  /* === STAT READOUTS === */
   .stats-panel {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 16px;
   }
 
   .stat-block {
     flex: 1;
-    background: var(--panel);
-    border-radius: 14px;
-    padding: 12px 8px 10px;
-    position: relative;
-    text-align: center;
-    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
-    border: 2px solid transparent;
+    padding: 8px 0;
+    border-left: 1px solid var(--green-dark);
+    padding-left: 10px;
   }
 
-  .stat-block.str { border-color: var(--str); transform: rotate(-1.5deg); }
-  .stat-block.agi { border-color: var(--agi); transform: rotate(0.5deg); }
-  .stat-block.end { border-color: var(--end); transform: rotate(1deg); }
-
   .stat-name {
-    font-size: 0.6rem;
+    font-size: 0.5rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    color: var(--dim);
     margin-bottom: 2px;
   }
 
-  .stat-block.str .stat-name { color: var(--str); }
-  .stat-block.agi .stat-name { color: var(--agi); }
-  .stat-block.end .stat-name { color: var(--end); }
-
   .stat-value {
     font-size: 1.6rem;
-    font-weight: 900;
     line-height: 1;
-    margin-bottom: 6px;
-    font-family: 'Caveat', cursive;
+    margin-bottom: 4px;
+    color: var(--green);
+    animation: flicker 2.5s ease infinite;
   }
 
-  .stat-block.str .stat-value { color: var(--str); }
-  .stat-block.agi .stat-value { color: var(--agi); }
-  .stat-block.end .stat-value { color: var(--end); }
+  .stat-block:nth-child(2) .stat-value { animation-delay: 0.8s; }
+  .stat-block:nth-child(3) .stat-value { animation-delay: 1.6s; }
 
   .stat-bar-track {
-    height: 6px;
-    background: #f0ebe0;
-    border-radius: 3px;
+    height: 1px;
+    background: var(--green-dark);
     overflow: hidden;
-    margin: 0 4px;
   }
 
   .stat-bar-fill {
     height: 100%;
-    border-radius: 3px;
+    background: var(--green);
     animation: stat-fill 1s ease-out;
+    box-shadow: 0 0 4px var(--green);
   }
-
-  .stat-block.str .stat-bar-fill { background: var(--str); }
-  .stat-block.agi .stat-bar-fill { background: var(--agi); }
-  .stat-block.end .stat-bar-fill { background: var(--end); }
 
   /* === MISSION BRIEFING === */
   .mission {
-    background: var(--panel);
-    border-radius: 4px;
+    border: 1px solid var(--green-dark);
     margin-bottom: 16px;
     position: relative;
-    overflow: hidden;
-    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
-    transform: rotate(0.3deg);
+    background: var(--panel);
   }
 
   .mission::before {
@@ -343,242 +334,203 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 28px;
-    background: rgba(126,156,199,0.65);
-    clip-path: polygon(2px 0, calc(100% - 1px) 2px, calc(100% - 3px) calc(100% - 1px), 0 calc(100% - 2px));
+    height: 1px;
+    background: var(--green);
+    opacity: 0.5;
   }
 
   .mission-header {
-    padding: 4px 16px 0;
+    padding: 10px 12px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative;
-    z-index: 1;
   }
 
   .mission-tag {
-    font-size: 0.65rem;
+    font-size: 0.5rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #fff;
+    letter-spacing: 3px;
+    color: var(--dim);
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 0;
-    font-weight: 700;
   }
 
   .mission-tag::before {
-    content: '📌';
-    font-size: 0.8rem;
+    content: '▸';
+    color: var(--green);
+    animation: glow-pulse 2s ease infinite;
   }
 
   .mission-type {
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 12px 16px 8px;
-    color: var(--ink);
-    font-family: 'Caveat', cursive;
-    font-size: 1.8rem;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    padding: 6px 12px 10px;
+    color: var(--green);
   }
 
   .mission-progress {
-    padding: 0 16px 12px;
-    font-size: 0.75rem;
+    padding: 0 12px 10px;
+    font-size: 0.6rem;
     color: var(--dim);
     letter-spacing: 1px;
   }
 
   .mission-progress span {
-    color: var(--ink);
-    font-weight: 700;
+    color: var(--green);
   }
 
-  /* === SKILL CARDS (paper cutouts) === */
+  /* === SKILL CARDS (exercise data readouts) === */
   .skill-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     margin-bottom: 16px;
   }
 
   .skill-card {
+    border: 1px solid var(--green-dark);
     background: var(--panel);
-    border: none;
-    padding: 14px 16px;
+    padding: 12px;
     position: relative;
-    border-radius: 4px;
-    box-shadow: 2px 3px 0 rgba(0,0,0,0.08), 0 1px 0 var(--panel-edge);
     animation: slide-in 0.3s ease backwards;
-    border-left: 4px solid var(--panel-edge);
   }
 
-  .skill-card:nth-child(1) { animation-delay: 0.05s; transform: rotate(-0.5deg); border-left-color: var(--rose); }
-  .skill-card:nth-child(2) { animation-delay: 0.1s; transform: rotate(0.3deg); border-left-color: var(--corn); }
-  .skill-card:nth-child(3) { animation-delay: 0.15s; transform: rotate(-0.2deg); border-left-color: var(--sage); }
+  .skill-card:nth-child(1) { animation-delay: 0.05s; }
+  .skill-card:nth-child(2) { animation-delay: 0.1s; }
+  .skill-card:nth-child(3) { animation-delay: 0.15s; }
 
   .skill-card.all-done {
-    border-left-color: var(--success);
-    background: linear-gradient(135deg, #f5fff5, var(--panel));
+    border-color: var(--green);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.1);
   }
 
   .skill-card.all-done::after {
-    content: '✓ done!';
+    content: '◆ CLEAR';
     position: absolute;
-    top: 10px;
-    right: 14px;
-    font-size: 0.7rem;
-    color: var(--success);
-    font-weight: 700;
-    font-family: 'Caveat', cursive;
-    font-size: 0.9rem;
+    top: 8px;
+    right: 12px;
+    font-size: 0.45rem;
+    letter-spacing: 2px;
+    color: var(--green);
   }
 
   .skill-name {
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
     margin-bottom: 2px;
-    color: var(--ink);
+    color: var(--green);
   }
 
   .skill-video {
-    color: var(--corn);
+    color: var(--green);
     text-decoration: none;
     margin-left: 8px;
     transition: all 0.2s;
     display: inline-block;
     vertical-align: middle;
-    opacity: 0.7;
+    opacity: 0.4;
   }
-  .skill-video:active { transform: scale(1.2); opacity: 1; }
+  .skill-video:active { opacity: 0.8; }
 
   .skill-detail {
-    font-size: 0.7rem;
+    font-size: 0.55rem;
     color: var(--dim);
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     margin-bottom: 10px;
   }
 
   .skill-sets {
     display: flex;
-    gap: 10px;
+    gap: 8px;
   }
 
-  /* === SET BUTTONS (hand-drawn circles) === */
+  /* === SET BUTTONS — green squares === */
   .set-btn {
-    width: 42px;
-    height: 42px;
-    transform: none;
-    border: 3px solid var(--panel-edge);
-    background: var(--panel);
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--green-dark);
+    background: transparent;
     color: var(--dim);
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: 0.75rem;
     cursor: pointer;
     position: relative;
-    transition: all 0.2s;
+    transition: all 0.15s;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    font-family: 'Patrick Hand', cursive;
+    font-family: 'Share Tech Mono', monospace;
   }
 
   .set-btn span {
-    transform: none;
     display: block;
   }
 
   .set-btn:active {
-    transform: scale(0.85);
+    transform: scale(0.9);
   }
 
   .set-btn.done {
-    background: var(--sage);
-    border-color: var(--end);
-    color: #fff;
-    box-shadow: 1px 2px 0 rgba(0,0,0,0.1);
+    background: var(--green);
+    border-color: var(--green);
+    color: var(--bg);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
     animation: diamond-pop 0.3s ease;
   }
 
-  .set-btn.done::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border: 2px dashed var(--end);
-    opacity: 0.3;
-    border-radius: 50%;
-  }
+  .set-btn.done::before { display: none; }
 
-  /* === COMPLETE BUTTON (stamp) === */
+  /* === COMPLETE BUTTON === */
   .complete-btn {
     width: 100%;
-    padding: 18px;
-    border: 3px dashed var(--panel-edge);
-    background: var(--panel);
+    padding: 14px;
+    border: 1px solid var(--green-dark);
+    background: transparent;
     color: var(--dim);
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: 0.75rem;
+    font-family: 'Share Tech Mono', monospace;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 4px;
     cursor: default;
-    border-radius: 14px;
     transition: all 0.3s;
     -webkit-tap-highlight-color: transparent;
     margin-bottom: 16px;
     position: relative;
     overflow: hidden;
-    font-family: 'Patrick Hand', cursive;
-    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
   }
 
   .complete-btn.ready {
-    border: 3px solid var(--sage);
-    color: #fff;
+    border-color: var(--red);
+    color: var(--red);
     cursor: pointer;
-    background: var(--sage);
-    box-shadow: 3px 4px 0 rgba(0,0,0,0.15);
-    font-size: 1.1rem;
-    letter-spacing: 3px;
+    background: rgba(255, 68, 68, 0.05);
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.15);
+    text-shadow: 0 0 8px rgba(255, 68, 68, 0.5);
   }
 
   .complete-btn.ready::before {
-    content: '🌟';
+    content: '';
     position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem;
-  }
-
-  .complete-btn.ready::after {
-    content: '🌟';
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 68, 68, 0.03), transparent);
+    animation: quest-complete 2s linear infinite;
+    background-size: 200% 100%;
   }
 
   .complete-btn.ready:active {
-    transform: scale(0.97);
-    box-shadow: 1px 2px 0 rgba(0,0,0,0.15);
+    transform: scale(0.98);
+    box-shadow: 0 0 25px rgba(255, 68, 68, 0.3);
   }
 
-  /* === QUEST LOG (pen checklist) === */
+  /* === QUEST LOG — mission data feed === */
   .quest-log {
+    border: 1px solid var(--green-dark);
     background: var(--panel);
-    border-radius: 4px;
     margin-bottom: 16px;
     position: relative;
-    overflow: hidden;
-    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
-    transform: rotate(-0.4deg);
   }
 
   .quest-log::before {
@@ -587,228 +539,193 @@
     left: 0;
     top: 0;
     bottom: 0;
-    width: 28px;
-    background: rgba(212,160,160,0.5);
-    clip-path: polygon(0 0, 100% 2px, calc(100% - 2px) calc(100% - 1px), 0 100%);
+    width: 1px;
+    background: var(--green);
+    opacity: 0.3;
   }
 
   .quest-header {
-    padding: 12px 16px 8px 36px;
-    font-size: 0.7rem;
+    padding: 10px 12px 6px;
+    font-size: 0.5rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--rose);
+    letter-spacing: 3px;
+    color: var(--dim);
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 700;
   }
 
   .quest-header::before {
-    content: '!';
-    display: inline-flex;
-    width: 18px;
-    height: 18px;
-    align-items: center;
-    justify-content: center;
-    background: var(--rose);
-    color: #fff;
-    font-weight: 900;
-    font-size: 0.65rem;
-    border-radius: 50%;
+    content: '▸';
+    color: var(--green);
+    font-size: 0.6rem;
   }
 
   .quest-item {
-    padding: 8px 16px 8px 36px;
+    padding: 6px 12px;
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 0.85rem;
-    border-top: 1px dashed #e8e0d0;
+    font-size: 0.7rem;
+    border-top: 1px solid rgba(0, 255, 65, 0.05);
     position: relative;
   }
 
   .quest-item:last-child {
-    padding-bottom: 12px;
+    padding-bottom: 10px;
   }
 
   .quest-diamond {
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--panel-edge);
-    transform: none;
+    width: 8px;
+    height: 8px;
+    border: 1px solid var(--green-dark);
     flex-shrink: 0;
     transition: all 0.3s;
-    border-radius: 3px;
   }
 
   .quest-diamond.done {
-    background: var(--success);
-    border-color: var(--success);
-    position: relative;
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 6px rgba(0, 255, 65, 0.4);
   }
 
-  .quest-diamond.done::after {
-    content: '✓';
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 0.6rem;
-    font-weight: 900;
-  }
-
-  .quest-label { color: var(--text); }
+  .quest-label { color: var(--dim); }
   .quest-label.done {
-    color: var(--dim);
-    text-decoration: line-through;
-    text-decoration-color: var(--dim);
+    color: var(--green);
+    opacity: 0.6;
   }
 
   /* === STREAK & TIMELINE === */
   .timeline-section {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 16px;
   }
 
   .streak-display {
+    border: 1px solid var(--green-dark);
     background: var(--panel);
-    border-radius: 14px;
-    padding: 12px;
+    padding: 10px;
     text-align: center;
     flex-shrink: 0;
-    width: 80px;
-    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
-    border: 2px solid var(--corn);
-    transform: rotate(-1deg);
+    width: 72px;
   }
 
   .streak-num {
-    font-size: 2.2rem;
-    font-weight: 900;
+    font-size: 1.8rem;
     line-height: 1;
-    color: var(--corn);
-    font-family: 'Caveat', cursive;
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
   }
 
   .streak-label {
-    font-size: 0.55rem;
+    font-size: 0.45rem;
     text-transform: uppercase;
     letter-spacing: 2px;
     color: var(--dim);
     margin-top: 2px;
   }
 
+  /* Week: 7 small diamonds in a row */
   .week-track {
     flex: 1;
+    border: 1px solid var(--green-dark);
     background: var(--panel);
-    border-radius: 10px;
     padding: 8px;
     display: flex;
     gap: 6px;
     align-items: center;
     justify-content: center;
-    box-shadow: 2px 3px 0 rgba(0,0,0,0.08);
-    transform: rotate(0.3deg);
   }
 
   .week-cell {
-    flex: 1;
-    max-width: 40px;
-    aspect-ratio: 1;
+    width: 28px;
+    height: 28px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 0.6rem;
+    font-size: 0.5rem;
     color: var(--dim);
-    background: #f5f0e5;
-    border: 2px solid #e8e0d0;
-    border-radius: 6px;
+    transform: rotate(45deg);
+    border: 1px solid var(--green-dark);
+    background: transparent;
     transition: all 0.3s;
-    font-weight: 700;
+  }
+
+  .week-cell span {
+    transform: rotate(-45deg);
   }
 
   .week-cell.done {
-    background: var(--sage);
-    border-color: var(--sage);
-    color: #fff;
-    font-weight: 700;
+    background: var(--green);
+    border-color: var(--green);
+    color: var(--bg);
+    box-shadow: 0 0 6px rgba(0, 255, 65, 0.2);
   }
 
   .week-cell.today {
-    border-color: var(--corn);
-    color: var(--corn);
-    box-shadow: 0 0 0 2px rgba(126,156,199,0.2);
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 6px rgba(0, 255, 65, 0.15);
   }
 
   .week-cell.done.today {
-    border-color: var(--sage);
-    color: #fff;
-    box-shadow: 0 0 0 2px rgba(143,172,143,0.3);
+    background: var(--green);
+    color: var(--bg);
   }
 
   /* === DONE BANNER === */
   .done-banner {
+    border: 1px solid var(--green);
     background: var(--panel);
-    border-radius: 14px;
-    padding: 28px 20px;
+    padding: 28px 16px;
     text-align: center;
     margin-bottom: 16px;
     position: relative;
     overflow: hidden;
-    box-shadow: 3px 4px 0 rgba(0,0,0,0.1);
-    border: 3px solid var(--sage);
-    transform: rotate(-0.5deg);
   }
 
   .done-banner::before {
-    content: '🎉';
+    content: '';
     position: absolute;
-    top: 10px;
-    left: 14px;
-    font-size: 1.2rem;
-  }
-
-  .done-banner::after {
-    content: '✨';
-    position: absolute;
-    top: 10px;
-    right: 14px;
-    font-size: 1.2rem;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--green);
   }
 
   .done-status {
-    font-size: 0.65rem;
+    font-size: 0.5rem;
     text-transform: uppercase;
-    letter-spacing: 3px;
-    color: var(--success);
+    letter-spacing: 5px;
+    color: var(--green);
     margin-bottom: 6px;
-    font-weight: 700;
+    opacity: 0.6;
   }
 
   .done-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 8px;
-    font-family: 'Caveat', cursive;
+    font-size: 1.6rem;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    color: var(--green);
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.6), 0 0 40px rgba(0, 255, 65, 0.3);
+    margin-bottom: 4px;
+    animation: power-scan 2s ease infinite;
   }
 
   .done-xp {
-    font-size: 0.95rem;
-    color: var(--mustard);
-    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--green);
+    opacity: 0.7;
   }
 
   .done-next {
-    font-size: 0.75rem;
+    font-size: 0.6rem;
     color: var(--dim);
-    margin-top: 8px;
-    letter-spacing: 1px;
+    margin-top: 10px;
+    letter-spacing: 2px;
   }
 
   /* === XP POPUP === */
@@ -817,21 +734,20 @@
     top: 40%;
     left: 50%;
     font-size: 2.2rem;
-    font-weight: 900;
-    color: var(--mustard);
-    text-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+    color: var(--green);
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.8), 0 0 40px rgba(0, 255, 65, 0.4);
     pointer-events: none;
     animation: xp-float 1.2s ease forwards;
     z-index: 100;
     letter-spacing: 2px;
-    font-family: 'Caveat', cursive;
+    font-family: 'Share Tech Mono', monospace;
   }
 
   /* === LEVEL UP OVERLAY === */
   .levelup-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(201,168,76,0.2);
+    background: rgba(0, 255, 65, 0.1);
     z-index: 200;
     animation: levelup-flash 1.5s ease forwards;
     pointer-events: none;
@@ -842,43 +758,45 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 3rem;
-    font-weight: 900;
-    letter-spacing: 6px;
+    font-size: 2.5rem;
+    letter-spacing: 8px;
     text-transform: uppercase;
-    color: var(--mustard);
-    text-shadow: 3px 3px 0 rgba(0,0,0,0.15);
+    color: var(--green);
+    text-shadow: 0 0 30px rgba(0, 255, 65, 0.8), 0 0 60px rgba(0, 255, 65, 0.4);
     z-index: 201;
     animation: levelup-text 1.5s ease forwards;
     pointer-events: none;
-    font-family: 'Caveat', cursive;
+    font-family: 'Share Tech Mono', monospace;
   }
 
   /* === SYNC BADGE === */
   .sync-badge {
-    font-size: 0.55rem;
+    font-size: 0.45rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 3px 10px;
-    border: 1px solid var(--panel-edge);
-    background: var(--panel);
+    letter-spacing: 2px;
+    padding: 2px 6px;
+    border: 1px solid var(--green-dark);
+    background: transparent;
     color: var(--dim);
     display: inline-block;
-    border-radius: 10px;
-    font-family: 'Patrick Hand', cursive;
+    font-family: 'Share Tech Mono', monospace;
   }
-  .sync-badge.synced { border-color: var(--success); color: var(--success); }
-  .sync-badge.syncing { border-color: var(--corn); color: var(--corn); animation: glow-pulse 1s ease infinite; }
-  .sync-badge.error { border-color: var(--str); color: var(--str); }
+  .sync-badge.synced { border-color: var(--green); color: var(--green); opacity: 0.6; }
+  .sync-badge.syncing { border-color: var(--green); color: var(--green); animation: glow-pulse 1s ease infinite; }
+  .sync-badge.error { border-color: var(--red); color: var(--red); }
   .sync-badge.local { color: var(--dim); }
-
-  /* === CORNER DECORATIONS (hidden for this theme) === */
-  .corner-tl, .corner-br { display: none; }
 </style>
 </head>
 <body>
 <div class="corner-tl"></div>
+<div class="corner-tr"></div>
+<div class="corner-bl"></div>
 <div class="corner-br"></div>
+<div class="reticle">
+  <div class="reticle-inner"></div>
+  <div class="reticle-cross-h"></div>
+  <div class="reticle-cross-v"></div>
+</div>
 <div class="app" id="app"></div>
 <script>
 const SYNC_URL = 'https://anime-bod-sync.winslowcj5.workers.dev/api/sync';
@@ -1135,30 +1053,34 @@ function render() {
   const totalCompleted = getCompletedCount(d);
   const maxStat = Math.max(d.player.stats.str, d.player.stats.agi, d.player.stats.end, 1);
 
+  const powerLevel = d.player.xp > 0 ? d.player.xp.toLocaleString() : '0';
+
   let h = '';
 
-  // HUD
+  // HUD — scouter readout
   h += `<div class="hud">`;
-  h += `<div class="hud-avatar">${level}</div>`;
   h += `<div class="hud-info">`;
-  h += `<div class="hud-title">Player Status</div>`;
-  h += `<div class="hud-name">Anime Physique</div>`;
-  h += `<div class="hud-class">${split.tag} // ${split.label.toUpperCase()}</div>`;
+  h += `<div class="hud-title">▸ Target Scan</div>`;
+  h += `<div class="hud-name">LVL ${level} // ${split.tag}</div>`;
+  h += `<div class="hud-class">${split.label.toUpperCase()} PROTOCOL</div>`;
   h += `</div>`;
-  h += `<div class="hud-level"><div class="hud-level-num">${level}</div><div class="hud-level-label">Level</div></div>`;
+  h += `<div class="power-level">`;
+  h += `<div class="power-level-label">Power Level</div>`;
+  h += `<div class="power-level-num">${powerLevel}</div>`;
+  h += `</div>`;
   h += `</div>`;
   if (USER_KEY) {
     const badgeLabel = syncState === 'syncing' ? 'syncing...' : syncState === 'synced' ? 'synced' : syncState === 'error' ? 'offline' : 'local only';
     h += `<div style="text-align:right;margin-bottom:4px"><span id="sync-badge" class="sync-badge ${syncState || 'local'}">${badgeLabel}</span></div>`;
   }
 
-  // XP Bar
+  // XP Bar — thin line with readout
   h += `<div class="xp-wrap">`;
   h += `<div class="xp-track"><div class="xp-fill" style="width:${xpPct}%"></div></div>`;
-  h += `<div class="xp-text">${xpCur} / ${xpNeed} XP</div>`;
+  h += `<div class="xp-text">${xpCur}/${xpNeed}</div>`;
   h += `</div>`;
 
-  // Stats
+  // Stats — scouter readings
   h += `<div class="stats-panel">`;
   const statTips = { str: 'Levels up from Push days (Pike Push-ups, Dips, Decline Push-ups)', agi: 'Levels up from Pull days (Pull-ups, Inverted Rows)', end: 'Levels up from Legs days (Pistol Squats, Hip Hinges, Dragonflies)' };
   ['str', 'agi', 'end'].forEach(s => {
@@ -1174,14 +1096,14 @@ function render() {
   h += `</div>`;
 
   if (w.completedAt) {
-    // Done state
+    // Done state — POWER LEVEL MAXIMUM
     const nextType = SPLIT_ORDER[totalCompleted % 3];
     const nextSplit = SPLITS[nextType];
     h += `<div class="done-banner">`;
-    h += `<div class="done-status">Mission Complete</div>`;
-    h += `<div class="done-title">${split.label}</div>`;
-    h += `<div class="done-xp">+${w.xpEarned} XP EARNED</div>`;
-    h += `<div class="done-next">NEXT MISSION // ${nextSplit.label.toUpperCase()}</div>`;
+    h += `<div class="done-status">▸ Scan Complete</div>`;
+    h += `<div class="done-title">POWER LEVEL MAXIMUM</div>`;
+    h += `<div class="done-xp">+${w.xpEarned} XP ACQUIRED</div>`;
+    h += `<div class="done-next">NEXT // ${nextSplit.label.toUpperCase()}</div>`;
     h += `</div>`;
   } else {
     // Mission header
@@ -1191,12 +1113,12 @@ function render() {
     });
 
     h += `<div class="mission">`;
-    h += `<div class="mission-header"><span class="mission-tag">Today's Mission</span></div>`;
+    h += `<div class="mission-header"><span class="mission-tag">Active Mission</span></div>`;
     h += `<div class="mission-type">${split.label}</div>`;
     h += `<div class="mission-progress"><span>${doneSets}</span> / ${totalSets} sets cleared</div>`;
     h += `</div>`;
 
-    // Skill cards
+    // Skill cards — data readouts
     h += `<div class="skill-list">`;
     w.exercises.forEach((ex, ei) => {
       const cfg = split.exercises[ei];
@@ -1213,19 +1135,19 @@ function render() {
     });
     h += `</div>`;
 
-    // Complete button
+    // Complete button — red when ready (scouter overload)
     const canComplete = doneSets === totalSets && totalSets > 0;
     h += `<button class="complete-btn ${canComplete ? 'ready' : ''}" ${canComplete ? 'onclick="completeWorkout()"' : ''}>`;
-    h += canComplete ? 'Execute Mission' : `${doneSets} / ${totalSets} Sets`;
+    h += canComplete ? '◆ Execute Mission ◆' : `${doneSets} / ${totalSets} Sets`;
     h += `</button>`;
   }
 
-  // Quest log
+  // Quest log — mission data feed
   updateQuests(d);
   store.save(d);
   const quests = d.quests[key] || [];
   h += `<div class="quest-log">`;
-  h += `<div class="quest-header">Quest Log</div>`;
+  h += `<div class="quest-header">Data Feed</div>`;
   quests.forEach(q => {
     h += `<div class="quest-item">`;
     h += `<div class="quest-diamond ${q.done ? 'done' : ''}"></div>`;
@@ -1234,7 +1156,7 @@ function render() {
   });
   h += `</div>`;
 
-  // Timeline
+  // Timeline — week diamonds
   h += `<div class="timeline-section">`;
   h += `<div class="streak-display"><div class="streak-num">${streak}</div><div class="streak-label">Streak</div></div>`;
   h += `<div class="week-track">`;
@@ -1249,7 +1171,7 @@ function render() {
     const isToday = dk === todayStr();
     const wk = d.workouts[dk];
     const done = wk?.completedAt;
-    h += `<div class="week-cell ${done ? 'done' : ''} ${isToday ? 'today' : ''}">${dayLabels[i]}</div>`;
+    h += `<div class="week-cell ${done ? 'done' : ''} ${isToday ? 'today' : ''}"><span>${dayLabels[i]}</span></div>`;
   }
   h += `</div></div>`;
 

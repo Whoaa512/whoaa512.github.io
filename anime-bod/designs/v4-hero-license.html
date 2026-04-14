@@ -3,11 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>ANIME PHYSIQUE // RPG</title>
+<title>U.A. HIGH — HERO TRAINING SYSTEM</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#1a56a0">
 <style>
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
   @keyframes xp-float {
     0% { opacity: 1; transform: translate(-50%, 0) scale(0.5); }
     20% { opacity: 1; transform: translate(-50%, -10px) scale(1.3); }
@@ -23,174 +31,296 @@
     60% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
   }
+  @keyframes stat-fill {
+    from { width: 0; }
+  }
+  @keyframes diamond-pop {
+    0% { transform: scale(0.8); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes quest-complete {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  @keyframes border-flow {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+  }
 
   :root {
-    --str: #e60012;
-    --agi: #009BBF;
-    --end: #00BB85;
-    --text: #1a1a1a;
-    --dim: #999999;
-    --bg: #ffffff;
-    --card-bg: #ffffff;
-    --border: #e0e0e0;
-    --track-bg: #f0f0f0;
+    --bg: #e8e8e8;
+    --panel: #ffffff;
+    --panel-edge: #d0d0d0;
+    --ua-blue: #1a56a0;
+    --ua-blue-light: #2a6fc0;
+    --ua-red: #c41230;
+    --gold: #d4930d;
+    --gold-dim: #a07008;
+    --text: #2a2a2a;
+    --dim: #888888;
+    --str: #c41230;
+    --agi: #1a56a0;
+    --end: #1a8a4a;
+    --success: #1a8a4a;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Helvetica Neue', 'Arial', system-ui, -apple-system, sans-serif;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-    letter-spacing: -0.01em;
+    position: relative;
   }
+
+  body::before { display: none; }
+  body::after { display: none; }
 
   .app {
     max-width: 440px;
     margin: 0 auto;
-    padding: 0 20px 60px;
+    padding: 0 0 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* === UA HEADER BAR === */
+  .ua-header {
+    background: var(--ua-blue);
+    color: #fff;
+    padding: 14px 16px 12px;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    position: relative;
+  }
+  .ua-header::after {
+    content: '';
+    display: block;
+    height: 3px;
+    background: var(--ua-red);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .app-body {
+    padding: 0 12px;
+  }
+
+  /* === HERO LICENSE CARD === */
+  .hud {
+    padding: 0;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: var(--panel);
+    border: 2px solid var(--panel-edge);
+    border-radius: 12px;
+    margin-top: 14px;
+    overflow: hidden;
     position: relative;
   }
 
-  /* === HEADER === */
-  .hud {
-    padding: 24px 0 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    border-bottom: 1px solid var(--border);
+  .hud::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--ua-blue);
   }
 
   .hud-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--text);
-    color: #fff;
+    width: 72px;
+    min-height: 72px;
+    background: linear-gradient(135deg, #e0eaf5, #c8d8ec);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    font-weight: 800;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--ua-blue);
     flex-shrink: 0;
-    letter-spacing: -0.02em;
+    position: relative;
+    margin: 12px 0 12px 16px;
+    border-radius: 50%;
+    border: 3px solid var(--ua-blue);
   }
 
-  .hud-info { flex: 1; min-width: 0; }
+  .hud-info {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+  }
 
   .hud-title {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     text-transform: uppercase;
     letter-spacing: 2px;
     color: var(--dim);
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .hud-name {
     font-size: 1.1rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    letter-spacing: 0.5px;
     color: var(--text);
+    margin-top: 1px;
   }
 
   .hud-class {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
+    color: var(--ua-blue);
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .hud-license {
+    font-size: 0.55rem;
     color: var(--dim);
-    letter-spacing: 0.5px;
-    font-weight: 500;
+    letter-spacing: 1px;
+    margin-top: 4px;
   }
 
   .hud-level {
     text-align: center;
     flex-shrink: 0;
-    padding: 6px 12px;
-    background: var(--text);
-    border-radius: 4px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .hud-level-num {
-    font-size: 1.6rem;
-    font-weight: 800;
+    font-size: 1.8rem;
+    font-weight: 900;
     line-height: 1;
-    color: #fff;
-    letter-spacing: -0.03em;
+    color: var(--ua-blue);
   }
 
   .hud-level-label {
     font-size: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: rgba(255,255,255,0.6);
-    font-weight: 500;
+    color: var(--dim);
+    font-weight: 600;
   }
 
   /* === XP BAR === */
   .xp-wrap {
     position: relative;
-    margin: 16px 0;
+    margin-bottom: 14px;
+    margin-top: 14px;
+  }
+
+  .xp-header {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--dim);
+    margin-bottom: 5px;
   }
 
   .xp-track {
-    height: 3px;
-    background: var(--track-bg);
+    height: 10px;
+    background: #d8d8d8;
+    border-radius: 5px;
     overflow: hidden;
+    position: relative;
   }
 
   .xp-fill {
     height: 100%;
-    background: var(--text);
+    background: linear-gradient(90deg, var(--ua-blue), var(--ua-blue-light));
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border-radius: 5px;
   }
+
+  .xp-fill::after { display: none; }
 
   .xp-text {
     font-size: 0.6rem;
     color: var(--dim);
     text-align: right;
-    margin-top: 4px;
+    margin-top: 3px;
     letter-spacing: 0.5px;
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
+    font-weight: 600;
   }
 
   /* === STATS PANEL === */
+  .section-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--ua-blue);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--panel-edge);
+  }
+
   .stats-panel {
     display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 16px;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--ua-blue);
   }
 
   .stat-block {
     flex: 1;
-    padding: 14px 12px 12px;
-    border-left: 6px solid;
-    background: var(--card-bg);
-    border-top: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+    padding: 6px 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
-  .stat-block.str { border-left-color: var(--str); }
-  .stat-block.agi { border-left-color: var(--agi); }
-  .stat-block.end { border-left-color: var(--end); }
+  .stat-block + .stat-block {
+    border-top: 1px solid #eee;
+  }
+
+  .stat-block::before { display: none; }
 
   .stat-name {
-    font-size: 0.55rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: var(--dim);
-    font-weight: 600;
-    margin-bottom: 4px;
+    font-weight: 700;
+    width: 32px;
+    flex-shrink: 0;
   }
 
+  .stat-block.str .stat-name { color: var(--str); }
+  .stat-block.agi .stat-name { color: var(--agi); }
+  .stat-block.end .stat-name { color: var(--end); }
+
   .stat-value {
-    font-size: 1.8rem;
+    font-size: 0.85rem;
     font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
+    width: 30px;
+    text-align: right;
+    flex-shrink: 0;
   }
 
   .stat-block.str .stat-value { color: var(--str); }
@@ -198,268 +328,290 @@
   .stat-block.end .stat-value { color: var(--end); }
 
   .stat-bar-track {
-    height: 2px;
-    background: var(--track-bg);
-    margin-top: 8px;
+    flex: 1;
+    height: 8px;
+    background: #eaeaea;
+    border-radius: 4px;
     overflow: hidden;
   }
 
-  .stat-bar-fill { height: 100%; }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    animation: stat-fill 1s ease-out;
+  }
+
   .stat-block.str .stat-bar-fill { background: var(--str); }
   .stat-block.agi .stat-bar-fill { background: var(--agi); }
   .stat-block.end .stat-bar-fill { background: var(--end); }
 
-  /* === MISSION === */
+  /* === TODAY'S TRAINING === */
   .mission {
-    margin-bottom: 20px;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+    border-left: 3px solid var(--ua-red);
   }
 
+  .mission::before { display: none; }
+
   .mission-header {
+    padding: 14px 16px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2px;
   }
 
   .mission-tag {
-    font-size: 0.55rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: var(--dim);
-    font-weight: 600;
-  }
-
-  .mission-type-bar {
-    padding: 10px 16px;
-    color: #fff;
-    font-size: 1rem;
+    color: var(--ua-red);
     font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
-  .mission-type-bar.push { background: var(--str); }
-  .mission-type-bar.pull { background: var(--agi); }
-  .mission-type-bar.legs { background: var(--end); }
+  .mission-tag::before {
+    content: '●';
+    font-size: 0.5rem;
+    color: var(--ua-red);
+    animation: glow-pulse 2s ease infinite;
+  }
+
+  .mission-type {
+    font-size: 1.2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 6px 16px 12px;
+    color: var(--text);
+  }
 
   .mission-progress {
+    padding: 0 16px 12px;
     font-size: 0.65rem;
     color: var(--dim);
     letter-spacing: 0.5px;
-    padding: 6px 0;
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
+    font-weight: 600;
   }
 
   .mission-progress span {
-    color: var(--text);
-    font-weight: 700;
+    color: var(--ua-blue);
+    font-weight: 800;
   }
 
   /* === EXERCISE CARDS === */
   .skill-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 14px;
   }
 
   .skill-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-left: 6px solid var(--border);
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
     padding: 14px 16px;
     position: relative;
+    border-left: 3px solid var(--panel-edge);
+    animation: slide-in 0.3s ease backwards;
   }
 
-  .skill-card.str-line { border-left-color: var(--str); }
-  .skill-card.agi-line { border-left-color: var(--agi); }
-  .skill-card.end-line { border-left-color: var(--end); }
+  .skill-card:nth-child(1) { animation-delay: 0.05s; }
+  .skill-card:nth-child(2) { animation-delay: 0.1s; }
+  .skill-card:nth-child(3) { animation-delay: 0.15s; }
 
   .skill-card.all-done {
-    opacity: 0.6;
+    border-left-color: var(--success);
+    background: #f6faf7;
   }
 
   .skill-card.all-done::after {
-    content: '完了';
+    content: '✓ CLEAR';
     position: absolute;
     top: 14px;
     right: 16px;
-    font-size: 0.65rem;
+    font-size: 0.55rem;
     letter-spacing: 1px;
-    color: var(--dim);
-    font-weight: 600;
+    color: var(--success);
+    font-weight: 800;
   }
 
   .skill-name {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    letter-spacing: -0.01em;
-    margin-bottom: 2px;
     color: var(--text);
+    margin-bottom: 2px;
   }
 
   .skill-video {
-    color: var(--dim);
+    color: var(--ua-blue);
     text-decoration: none;
     margin-left: 8px;
     transition: all 0.2s;
     display: inline-block;
     vertical-align: middle;
-    opacity: 0.5;
+    opacity: 0.7;
   }
-  .skill-video:active { opacity: 1; }
+  .skill-video:active { transform: scale(1.2); opacity: 1; }
 
   .skill-detail {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     color: var(--dim);
     letter-spacing: 1px;
-    margin-bottom: 12px;
-    font-weight: 500;
+    margin-bottom: 10px;
+    font-weight: 600;
   }
 
   .skill-sets {
     display: flex;
     gap: 8px;
-    align-items: center;
-    position: relative;
   }
 
-  .skill-sets::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 14px;
-    right: 14px;
-    height: 2px;
-    background: var(--track-bg);
-    z-index: 0;
-  }
-
-  /* === STATION DOT BUTTONS === */
+  /* === SET BUTTONS (rounded toggles) === */
   .set-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 3px solid var(--border);
-    background: #fff;
+    width: 42px;
+    height: 42px;
+    border: 2px solid #ccc;
+    background: #f5f5f5;
     color: var(--dim);
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     font-weight: 700;
     cursor: pointer;
     position: relative;
-    z-index: 1;
-    transition: all 0.15s;
+    transition: all 0.2s;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-variant-numeric: tabular-nums;
+    border-radius: 10px;
   }
 
-  .set-btn span { display: block; }
+  .set-btn span {
+    display: block;
+  }
 
-  .set-btn:active { transform: scale(0.9); }
+  .set-btn:active {
+    transform: scale(0.9);
+  }
 
   .set-btn.done {
-    border-color: var(--text);
-    background: var(--text);
+    background: var(--success);
+    border-color: var(--success);
     color: #fff;
+    animation: diamond-pop 0.3s ease;
   }
 
-  .set-btn.done.str-dot { border-color: var(--str); background: var(--str); }
-  .set-btn.done.agi-dot { border-color: var(--agi); background: var(--agi); }
-  .set-btn.done.end-dot { border-color: var(--end); background: var(--end); }
+  .set-btn.done::before { display: none; }
 
   /* === COMPLETE BUTTON === */
   .complete-btn {
     width: 100%;
-    padding: 14px;
-    border: 2px solid var(--border);
-    background: #fff;
+    padding: 16px;
+    border: 2px solid #ccc;
+    background: #f0f0f0;
     color: var(--dim);
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-size: 0.85rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 2px;
     cursor: default;
-    transition: all 0.2s;
+    border-radius: 10px;
+    transition: all 0.3s;
     -webkit-tap-highlight-color: transparent;
-    margin-bottom: 24px;
-    font-variant-numeric: tabular-nums;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
   }
 
   .complete-btn.ready {
-    border-color: var(--text);
+    border-color: var(--ua-red);
     color: #fff;
-    background: var(--text);
     cursor: pointer;
+    background: var(--ua-red);
   }
+
+  .complete-btn.ready::before { display: none; }
 
   .complete-btn.ready:active {
     transform: scale(0.98);
   }
 
-  /* === QUEST LOG (route diagram) === */
+  /* === QUEST LOG === */
   .quest-log {
-    margin-bottom: 24px;
-    padding-left: 0;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+    border-left: 3px solid var(--ua-blue);
   }
+
+  .quest-log::before { display: none; }
 
   .quest-header {
-    font-size: 0.55rem;
+    padding: 12px 16px 8px;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--dim);
-    font-weight: 600;
-    padding: 0 0 10px;
+    letter-spacing: 2.5px;
+    color: var(--ua-blue);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .quest-items {
-    padding-left: 14px;
-    position: relative;
-  }
-
-  .quest-items::before {
-    content: '';
-    position: absolute;
-    left: 5px;
-    top: 6px;
-    bottom: 6px;
-    width: 2px;
-    background: var(--border);
-  }
+  .quest-header::before { display: none; }
 
   .quest-item {
-    padding: 6px 0 6px 20px;
+    padding: 8px 16px;
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 0.8rem;
+    border-top: 1px solid #f0f0f0;
     position: relative;
-    font-weight: 500;
+  }
+
+  .quest-item:last-child {
+    padding-bottom: 12px;
   }
 
   .quest-diamond {
-    width: 12px;
-    height: 12px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
     border-radius: 50%;
-    border: 2px solid var(--border);
-    background: #fff;
     flex-shrink: 0;
     transition: all 0.3s;
-    position: absolute;
-    left: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
   }
 
   .quest-diamond.done {
-    background: var(--text);
-    border-color: var(--text);
+    background: var(--success);
+    border-color: var(--success);
   }
 
-  .quest-label { color: var(--text); }
+  .quest-diamond.done::after {
+    content: '✓';
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 900;
+    position: absolute;
+  }
+
+  .quest-label { color: var(--text); font-weight: 500; }
   .quest-label.done {
     color: var(--dim);
     text-decoration: line-through;
@@ -468,147 +620,128 @@
   /* === STREAK & WEEK === */
   .timeline-section {
     display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
-    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 14px;
   }
 
   .streak-display {
-    background: var(--text);
-    color: #fff;
-    padding: 14px 16px;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
+    padding: 12px;
     text-align: center;
     flex-shrink: 0;
     width: 80px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    border-left: 3px solid var(--ua-blue);
   }
 
   .streak-num {
-    font-size: 2.2rem;
-    font-weight: 800;
+    font-size: 2rem;
+    font-weight: 900;
     line-height: 1;
-    color: #fff;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
+    color: var(--ua-blue);
   }
 
   .streak-label {
-    font-size: 0.5rem;
+    font-size: 0.45rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+    color: var(--dim);
     margin-top: 2px;
-    font-weight: 500;
+    font-weight: 700;
+    line-height: 1.3;
   }
 
   .week-track {
     flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
+    padding: 8px;
     display: flex;
+    gap: 4px;
     align-items: center;
     justify-content: center;
-    gap: 0;
-    padding: 8px 4px;
-    border: 1px solid var(--border);
-    position: relative;
-  }
-
-  .week-track::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 24px;
-    right: 24px;
-    height: 2px;
-    background: var(--border);
-    transform: translateY(-1px);
   }
 
   .week-cell {
     flex: 1;
+    max-width: 40px;
+    aspect-ratio: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
-    z-index: 1;
-  }
-
-  .week-dot {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.5rem;
-    font-weight: 600;
+    font-size: 0.6rem;
+    font-weight: 700;
     color: var(--dim);
-    letter-spacing: 0;
+    background: #f0f0f0;
+    border: 2px solid transparent;
+    border-radius: 8px;
     transition: all 0.3s;
   }
 
-  .week-cell.done .week-dot {
-    background: var(--text);
-    border-color: var(--text);
+  .week-cell.done {
+    background: var(--success);
     color: #fff;
+    font-weight: 800;
   }
 
-  .week-cell.today .week-dot {
-    border-color: var(--text);
-    border-width: 3px;
+  .week-cell.today {
+    border-color: var(--ua-blue);
+    color: var(--ua-blue);
   }
 
-  .week-cell.done.today .week-dot {
-    background: var(--text);
-    border-color: var(--text);
+  .week-cell.done.today {
+    border-color: var(--success);
     color: #fff;
   }
 
   /* === DONE BANNER === */
   .done-banner {
-    border: 1px solid var(--border);
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 10px;
     padding: 32px 20px;
     text-align: center;
-    margin-bottom: 24px;
-    border-top: 4px solid var(--text);
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+    border-left: 3px solid var(--success);
   }
 
+  .done-banner::before { display: none; }
+
   .done-status {
-    font-size: 0.55rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 3px;
-    color: var(--dim);
-    margin-bottom: 8px;
-    font-weight: 600;
+    color: var(--success);
+    margin-bottom: 6px;
+    font-weight: 700;
   }
 
   .done-title {
-    font-size: 1.3rem;
-    font-weight: 800;
+    font-size: 1.4rem;
+    font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     color: var(--text);
     margin-bottom: 8px;
   }
 
   .done-xp {
     font-size: 0.85rem;
-    color: var(--text);
+    color: var(--gold);
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
   }
 
   .done-next {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     color: var(--dim);
-    margin-top: 10px;
-    letter-spacing: 1px;
-    font-weight: 500;
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
   }
 
   /* === XP POPUP === */
@@ -616,20 +749,21 @@
     position: fixed;
     top: 40%;
     left: 50%;
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--text);
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 2px 8px rgba(212,147,13,0.5);
     pointer-events: none;
     animation: xp-float 1.2s ease forwards;
     z-index: 100;
-    letter-spacing: -0.02em;
+    letter-spacing: 2px;
   }
 
   /* === LEVEL UP OVERLAY === */
   .levelup-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.08);
+    background: rgba(26,86,160,0.2);
     z-index: 200;
     animation: levelup-flash 1.5s ease forwards;
     pointer-events: none;
@@ -641,10 +775,11 @@
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 2.5rem;
-    font-weight: 800;
-    letter-spacing: 4px;
+    font-weight: 900;
+    letter-spacing: 6px;
     text-transform: uppercase;
-    color: var(--text);
+    color: var(--ua-blue);
+    text-shadow: 0 2px 16px rgba(26,86,160,0.5);
     z-index: 201;
     animation: levelup-text 1.5s ease forwards;
     pointer-events: none;
@@ -655,20 +790,25 @@
     font-size: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    padding: 2px 6px;
-    border: 1px solid var(--border);
-    background: #fff;
+    padding: 3px 8px;
+    border: 1px solid var(--panel-edge);
+    background: var(--panel);
     color: var(--dim);
     display: inline-block;
-    font-weight: 500;
+    border-radius: 4px;
+    font-weight: 600;
   }
-  .sync-badge.synced { border-color: var(--end); color: var(--end); }
-  .sync-badge.syncing { border-color: var(--agi); color: var(--agi); }
+  .sync-badge.synced { border-color: var(--success); color: var(--success); }
+  .sync-badge.syncing { border-color: var(--ua-blue); color: var(--ua-blue); animation: glow-pulse 1s ease infinite; }
   .sync-badge.error { border-color: var(--str); color: var(--str); }
   .sync-badge.local { color: var(--dim); }
+
+  .corner-tl, .corner-br { display: none; }
 </style>
 </head>
 <body>
+<div class="corner-tl"></div>
+<div class="corner-br"></div>
 <div class="app" id="app"></div>
 <script>
 const SYNC_URL = 'https://anime-bod-sync.winslowcj5.workers.dev/api/sync';
@@ -925,38 +1065,44 @@ function render() {
   const totalCompleted = getCompletedCount(d);
   const maxStat = Math.max(d.player.stats.str, d.player.stats.agi, d.player.stats.end, 1);
 
-  const lineClass = type === 'push' ? 'str' : type === 'pull' ? 'agi' : 'end';
-  const dotClass = type === 'push' ? 'str-dot' : type === 'pull' ? 'agi-dot' : 'end-dot';
-  const cardClass = type === 'push' ? 'str-line' : type === 'pull' ? 'agi-line' : 'end-line';
+  const quirkMap = { STRENGTH: 'Power Enhancement', AGILITY: 'Speed Force', ENDURANCE: 'Stamina Surge' };
 
   let h = '';
 
-  // HUD
+  // UA Header
+  h += `<div class="ua-header">U.A. High School — Hero Training Program</div>`;
+  h += `<div class="app-body">`;
+
+  // Hero License Card
   h += `<div class="hud">`;
   h += `<div class="hud-avatar">${level}</div>`;
   h += `<div class="hud-info">`;
-  h += `<div class="hud-title">Player Status</div>`;
+  h += `<div class="hud-title">Provisional Hero License</div>`;
   h += `<div class="hud-name">Anime Physique</div>`;
-  h += `<div class="hud-class">${split.tag} · ${split.label.toUpperCase()}</div>`;
+  h += `<div class="hud-class">Quirk: ${quirkMap[split.tag] || split.tag}</div>`;
+  h += `<div class="hud-license">LICENSE NO. UA-${String(totalCompleted).padStart(4,'0')}-${level}</div>`;
   h += `</div>`;
-  h += `<div class="hud-level"><div class="hud-level-num">${level}</div><div class="hud-level-label">Level</div></div>`;
+  h += `<div class="hud-level"><div class="hud-level-num">${level}</div><div class="hud-level-label">Rank</div></div>`;
   h += `</div>`;
   if (USER_KEY) {
     const badgeLabel = syncState === 'syncing' ? 'syncing...' : syncState === 'synced' ? 'synced' : syncState === 'error' ? 'offline' : 'local only';
-    h += `<div style="text-align:right;margin-bottom:4px"><span id="sync-badge" class="sync-badge ${syncState || 'local'}">${badgeLabel}</span></div>`;
+    h += `<div style="text-align:right;margin-top:6px;margin-bottom:4px"><span id="sync-badge" class="sync-badge ${syncState || 'local'}">${badgeLabel}</span></div>`;
   }
 
   // XP Bar
   h += `<div class="xp-wrap">`;
+  h += `<div class="xp-header">Hero Rank Progress</div>`;
   h += `<div class="xp-track"><div class="xp-fill" style="width:${xpPct}%"></div></div>`;
   h += `<div class="xp-text">${xpCur} / ${xpNeed} XP</div>`;
   h += `</div>`;
 
-  // Stats
+  // Stats — Quirk Assessment
+  h += `<div class="section-title">Quirk Assessment</div>`;
   h += `<div class="stats-panel">`;
+  const statLabels = { str: 'PWR', agi: 'SPD', end: 'STA' };
   const statTips = { str: 'Levels up from Push days (Pike Push-ups, Dips, Decline Push-ups)', agi: 'Levels up from Pull days (Pull-ups, Inverted Rows)', end: 'Levels up from Legs days (Pistol Squats, Hip Hinges, Dragonflies)' };
   ['str', 'agi', 'end'].forEach(s => {
-    const label = s.toUpperCase();
+    const label = statLabels[s];
     const val = d.player.stats[s];
     const pct = Math.min(100, (val / maxStat) * 100);
     h += `<div class="stat-block ${s}" title="${statTips[s]}">`;
@@ -972,36 +1118,36 @@ function render() {
     const nextType = SPLIT_ORDER[totalCompleted % 3];
     const nextSplit = SPLITS[nextType];
     h += `<div class="done-banner">`;
-    h += `<div class="done-status">Mission Complete</div>`;
+    h += `<div class="done-status">Training Complete</div>`;
     h += `<div class="done-title">${split.label}</div>`;
     h += `<div class="done-xp">+${w.xpEarned} XP EARNED</div>`;
-    h += `<div class="done-next">NEXT → ${nextSplit.label.toUpperCase()}</div>`;
+    h += `<div class="done-next">Next Training: ${nextSplit.label.toUpperCase()}</div>`;
     h += `</div>`;
   } else {
-    // Mission header
+    // Training header
     let totalSets = 0, doneSets = 0;
     w.exercises.forEach(ex => {
       ex.sets.forEach(s => { totalSets++; if (s.done) doneSets++; });
     });
 
     h += `<div class="mission">`;
-    h += `<div class="mission-header"><span class="mission-tag">Today's Mission</span></div>`;
-    h += `<div class="mission-type-bar ${type}">${split.label}</div>`;
-    h += `<div class="mission-progress"><span>${doneSets}</span> / ${totalSets} sets cleared</div>`;
+    h += `<div class="mission-header"><span class="mission-tag">Today's Training — Plus Ultra</span></div>`;
+    h += `<div class="mission-type">${split.label}</div>`;
+    h += `<div class="mission-progress"><span>${doneSets}</span> / ${totalSets} sets completed</div>`;
     h += `</div>`;
 
-    // Skill cards
+    // Exercise cards
     h += `<div class="skill-list">`;
     w.exercises.forEach((ex, ei) => {
       const cfg = split.exercises[ei];
       const allDone = ex.sets.every(s => s.done);
-      h += `<div class="skill-card ${cardClass} ${allDone ? 'all-done' : ''}">`;
-      const vidIcon = `<svg viewBox="0 0 24 20" width="28" height="22" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="22" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/><polygon points="9,5.5 9,14.5 17,10" fill="currentColor"/></svg>`;
+      h += `<div class="skill-card ${allDone ? 'all-done' : ''}">`;
+      const vidIcon = `<svg viewBox="0 0 24 20" width="32" height="26" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="22" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/><polygon points="9,5.5 9,14.5 17,10" fill="currentColor"/></svg>`;
       h += `<div class="skill-name">${cfg.name} ${cfg.video ? `<a href="${cfg.video}" target="_blank" class="skill-video">${vidIcon}</a>` : ''}</div>`;
-      h += `<div class="skill-detail">${cfg.defaultSets} SETS · ${cfg.defaultReps} REPS</div>`;
+      h += `<div class="skill-detail">${cfg.defaultSets} SETS / ${cfg.defaultReps} REPS</div>`;
       h += `<div class="skill-sets">`;
       ex.sets.forEach((s, si) => {
-        h += `<button class="set-btn ${s.done ? 'done ' + dotClass : ''}" onclick="toggleSet(${ei},${si})"><span>${si + 1}</span></button>`;
+        h += `<button class="set-btn ${s.done ? 'done' : ''}" onclick="toggleSet(${ei},${si})"><span>${s.done ? '✓' : si + 1}</span></button>`;
       });
       h += `</div></div>`;
     });
@@ -1010,28 +1156,27 @@ function render() {
     // Complete button
     const canComplete = doneSets === totalSets && totalSets > 0;
     h += `<button class="complete-btn ${canComplete ? 'ready' : ''}" ${canComplete ? 'onclick="completeWorkout()"' : ''}>`;
-    h += canComplete ? 'Execute Mission' : `${doneSets} / ${totalSets} Sets`;
+    h += canComplete ? 'Plus Ultra!!' : `${doneSets} / ${totalSets} Sets`;
     h += `</button>`;
   }
 
-  // Quest log
+  // Quest log — Hero Objectives
   updateQuests(d);
   store.save(d);
   const quests = d.quests[key] || [];
   h += `<div class="quest-log">`;
-  h += `<div class="quest-header">Quest Log</div>`;
-  h += `<div class="quest-items">`;
+  h += `<div class="quest-header">Hero Objectives</div>`;
   quests.forEach(q => {
     h += `<div class="quest-item">`;
     h += `<div class="quest-diamond ${q.done ? 'done' : ''}"></div>`;
     h += `<span class="quest-label ${q.done ? 'done' : ''}">${q.label}</span>`;
     h += `</div>`;
   });
-  h += `</div></div>`;
+  h += `</div>`;
 
   // Timeline
   h += `<div class="timeline-section">`;
-  h += `<div class="streak-display"><div class="streak-num">${streak}</div><div class="streak-label">Streak</div></div>`;
+  h += `<div class="streak-display"><div class="streak-num">${streak}</div><div class="streak-label">Consecutive Training Days</div></div>`;
   h += `<div class="week-track">`;
   const now = new Date();
   const mon = new Date(now);
@@ -1044,9 +1189,11 @@ function render() {
     const isToday = dk === todayStr();
     const wk = d.workouts[dk];
     const done = wk?.completedAt;
-    h += `<div class="week-cell ${done ? 'done' : ''} ${isToday ? 'today' : ''}"><div class="week-dot">${dayLabels[i]}</div></div>`;
+    h += `<div class="week-cell ${done ? 'done' : ''} ${isToday ? 'today' : ''}">${dayLabels[i]}</div>`;
   }
   h += `</div></div>`;
+
+  h += `</div>`; // close app-body
 
   document.getElementById('app').innerHTML = h;
 }
