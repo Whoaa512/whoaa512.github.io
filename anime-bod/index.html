@@ -737,6 +737,41 @@
   .sync-badge.syncing { border-color: var(--cyan); color: var(--cyan); animation: glow-pulse 1s ease infinite; }
   .sync-badge.error { border-color: var(--str); color: var(--str); }
   .sync-badge.local { color: var(--dim); }
+
+  .session-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: var(--panel);
+    border: 2px solid var(--panel-edge);
+    border-radius: 10px;
+    font-size: 0.7rem;
+  }
+  .session-bar .session-name {
+    color: var(--cyan);
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .session-bar.no-key span {
+    color: var(--dim);
+  }
+  .link-btn {
+    background: var(--panel);
+    border: 2px solid var(--cyan);
+    border-radius: 8px;
+    color: var(--cyan);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .link-btn:active {
+    background: rgba(0,195,255,0.15);
+  }
 </style>
 </head>
 <body>
@@ -1014,7 +1049,9 @@ function render() {
 
   if (USER_KEY) {
     const badgeLabel = syncState === 'syncing' ? 'syncing...' : syncState === 'synced' ? 'synced' : syncState === 'error' ? 'offline' : 'local only';
-    h += `<div style="text-align:right;margin-bottom:4px"><span id="sync-badge" class="sync-badge ${syncState || 'local'}">${badgeLabel}</span></div>`;
+    h += `<div class="session-bar"><span class="session-name">${USER_KEY}</span><span id="sync-badge" class="sync-badge ${syncState || 'local'}">${badgeLabel}</span></div>`;
+  } else {
+    h += `<div class="session-bar no-key"><span>Local only — data on this device</span><button class="link-btn" onclick="promptSessionKey()">Link Session</button></div>`;
   }
 
   // XP Bar
@@ -1259,6 +1296,15 @@ function completeWorkout() {
   }
 
   store.sync();
+}
+
+function promptSessionKey() {
+  const key = prompt('Enter a session name (6+ characters).\nUse the same name on any device to sync your data.');
+  if (!key) return;
+  if (key.length < 6) { alert('Session name must be at least 6 characters.'); return; }
+  const url = new URL(window.location);
+  url.searchParams.set('key', key);
+  window.location.href = url.toString();
 }
 
 render();
