@@ -772,6 +772,71 @@
   .link-btn:active {
     background: rgba(0,195,255,0.15);
   }
+
+  .help-btn {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--seam);
+    background: var(--panel);
+    color: var(--dim);
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .help-btn:active { background: var(--panel-edge); }
+
+  .help-modal { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; }
+  .help-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); }
+  .help-content {
+    position: relative;
+    background: var(--panel);
+    border: 3px solid var(--panel-edge);
+    border-radius: 16px;
+    padding: 24px 20px 20px;
+    max-width: 360px;
+    width: calc(100% - 40px);
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .help-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    margin-bottom: 16px;
+  }
+  .help-body p {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .help-body b { color: var(--orange); }
+  .help-body em { color: var(--cyan); font-style: normal; }
+  .help-close {
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px;
+    border: 2px solid var(--cyan);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--cyan);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+  }
+  .help-close:active { background: rgba(0,195,255,0.1); }
 </style>
 </head>
 <body>
@@ -1051,6 +1116,7 @@ function render() {
 
   // Console Header
   h += `<div class="console-header">`;
+  h += `<button class="help-btn" onclick="toggleHelp()" aria-label="Help">?</button>`;
   h += `<div class="console-logo">Anime Physique</div>`;
   h += `<div class="console-title">Training Console</div>`;
   h += `<div class="console-subtitle">Level ${level} // ${split.tag}</div>`;
@@ -1306,6 +1372,32 @@ function completeWorkout() {
   }
 
   store.sync();
+}
+
+function toggleHelp() {
+  let modal = document.getElementById('help-modal');
+  if (modal) { modal.remove(); return; }
+  modal = document.createElement('div');
+  modal.id = 'help-modal';
+  modal.className = 'help-modal';
+  modal.innerHTML = `
+    <div class="help-backdrop" onclick="toggleHelp()"></div>
+    <div class="help-content">
+      <div class="help-title">How It Works</div>
+      <div class="help-body">
+        <p><b>Daily Training</b><br>Each day you get a workout: Push, Pull, or Legs. They rotate in order.</p>
+        <p><b>Tracking Sets</b><br>Tap a set button to cycle through:<br>
+        ○ Empty → ◑ Partial → ● Complete → ○ Empty</p>
+        <p><b>Finishing Your Day</b><br>Once you've attempted any sets, you can end the session. Complete all sets for a perfect bonus.</p>
+        <p><b>XP &amp; Leveling</b><br>Partial set = 3 XP, full set = 5 XP, all sets in an exercise = +15 XP bonus. Completing the day earns bonus XP scaled to how much you did, plus a streak multiplier.</p>
+        <p><b>Stats</b><br>STR levels up from Push days, AGI from Pull days, END from Legs days.</p>
+        <p><b>Streaks</b><br>Train on consecutive days (Sundays off) to build your streak.</p>
+        <p><b>Sync Across Devices</b><br>Tap <em>Link Session</em> and enter a name (6+ chars). Use the same name on any device to share your progress.</p>
+      </div>
+      <button class="help-close" onclick="toggleHelp()">Got It</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
 }
 
 function promptSessionKey() {
