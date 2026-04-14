@@ -32,7 +32,7 @@ export default {
     }
 
     const key = url.searchParams.get('key');
-    if (!key || key.length < 8) {
+    if (!key || key.length < 6) {
       return new Response('Missing or invalid key', { status: 401, headers: cors });
     }
 
