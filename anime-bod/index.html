@@ -857,10 +857,20 @@ function mergeState(local, remote) {
     const lw = merged.workouts[day];
     if (!lw) { merged.workouts[day] = rw; return; }
     if (rw.completedAt && !lw.completedAt) { merged.workouts[day] = rw; return; }
+    if (!lw.completedAt && !rw.completedAt) {
+      const localDone = lw.exercises?.reduce((s, ex) => s + ex.sets.filter(x => x.done || x.state === 'done' || x.state === 'partial').length, 0) || 0;
+      const remoteDone = rw.exercises?.reduce((s, ex) => s + ex.sets.filter(x => x.done || x.state === 'done' || x.state === 'partial').length, 0) || 0;
+      if (remoteDone > localDone) { merged.workouts[day] = rw; return; }
+    }
   });
 
   Object.keys(remote.quests || {}).forEach(day => {
-    if (!merged.quests[day]) merged.quests[day] = remote.quests[day];
+    const rq = remote.quests[day];
+    const lq = merged.quests[day];
+    if (!lq) { merged.quests[day] = rq; return; }
+    const remoteDone = rq.filter(q => q.done).length;
+    const localDone = lq.filter(q => q.done).length;
+    if (remoteDone > localDone) merged.quests[day] = rq;
   });
 
   if (remote.player.xp > merged.player.xp) {
