@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Picker</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; background: #111; color: #eee; height: 100vh; display: flex; flex-direction: column; }
+nav { display: flex; gap: 2px; background: #222; padding: 4px; flex-shrink: 0; }
+nav button { flex: 1; padding: 10px 4px; background: #333; border: none; color: #999; font-size: 0.7rem; cursor: pointer; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+nav button.active { background: #555; color: #fff; }
+iframe { flex: 1; border: none; width: 100%; }
+</style>
+</head>
+<body>
+<nav id="nav"></nav>
+<iframe id="frame"></iframe>
+<script>
+const designs = [
+  { file: 'v1-ink-brush.html', label: '1 · Ink Brush' },
+  { file: 'v2-retro-terminal.html', label: '2 · Terminal' },
+  { file: 'v3-brutalist.html', label: '3 · Brutalist' },
+  { file: 'v4-manga-panel.html', label: '4 · Manga' },
+  { file: 'v5-clay-morph.html', label: '5 · Clay' },
+];
+const nav = document.getElementById('nav');
+const frame = document.getElementById('frame');
+function pick(i) {
+  frame.src = designs[i].file;
+  nav.querySelectorAll('button').forEach((b, j) => b.classList.toggle('active', j === i));
+}
+designs.forEach((d, i) => {
+  const b = document.createElement('button');
+  b.textContent = d.label;
+  b.onclick = () => pick(i);
+  nav.appendChild(b);
+});
+pick(0);
+</script>
+</body>
+</html>
