@@ -5,4 +5,4 @@ compatibility_date = "2024-09-23"
 [[d1_databases]]
 binding = "DB"
 database_name = "anime-bod-db"
-database_id = "TODO_AFTER_CREATE"
+database_id = "77607a4f-a33b-4d77-87d9-1ffdbd0b069c"
