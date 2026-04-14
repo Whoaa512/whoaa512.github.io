@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ANIME-BOD v2.0 // TERMINAL</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+  @keyframes blink-cursor {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  @keyframes scanlines-move {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 4px; }
+  }
+  @keyframes flicker {
+    0% { opacity: 0.97; }
+    5% { opacity: 0.95; }
+    10% { opacity: 0.98; }
+    15% { opacity: 0.96; }
+    20% { opacity: 0.99; }
+    50% { opacity: 0.96; }
+    80% { opacity: 0.98; }
+    100% { opacity: 0.97; }
+  }
+  @keyframes xp-float {
+    0% { opacity: 1; transform: translate(-50%, 0) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -10px) scale(1.3); }
+    100% { opacity: 0; transform: translate(-50%, -60px) scale(1); }
+  }
+  @keyframes levelup-flash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes levelup-text {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    60% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  }
+  @keyframes boot-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  :root {
+    --g: #33ff33;
+    --g-dim: #1a8c1a;
+    --g-bright: #66ff66;
+    --g-dark: #0d440d;
+    --amber: #ffaa00;
+    --amber-dim: #996600;
+    --red: #ff3333;
+    --cyan: #33cccc;
+    --bg: #000000;
+    --panel-bg: #0a0a0a;
+    --border: #1a3a1a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    background: var(--bg);
+    color: var(--g);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    animation: flicker 0.15s infinite;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15) 0px,
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 1000;
+    animation: scanlines-move 0.1s linear infinite;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 60%,
+      rgba(0, 0, 0, 0.45) 100%
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .app {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 8px 10px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .t-border-top {
+    color: var(--g-dim);
+    white-space: pre;
+    overflow: hidden;
+    font-size: 12px;
+    letter-spacing: 0;
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+
+  .t-border-bot {
+    color: var(--g-dim);
+    white-space: pre;
+    overflow: hidden;
+    font-size: 12px;
+    letter-spacing: 0;
+    line-height: 1.2;
+    margin-top: 2px;
+  }
+
+  .t-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    white-space: pre;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .t-row .t-pipe {
+    color: var(--g-dim);
+  }
+
+  .section {
+    margin-bottom: 10px;
+    animation: boot-in 0.3s ease backwards;
+  }
+
+  .section:nth-child(2) { animation-delay: 0.05s; }
+  .section:nth-child(3) { animation-delay: 0.1s; }
+  .section:nth-child(4) { animation-delay: 0.15s; }
+  .section:nth-child(5) { animation-delay: 0.2s; }
+  .section:nth-child(6) { animation-delay: 0.25s; }
+
+  .header-ascii {
+    color: var(--g);
+    font-size: 10px;
+    line-height: 1.15;
+    text-align: center;
+    white-space: pre;
+    text-shadow: 0 0 8px rgba(51, 255, 51, 0.5);
+    padding: 8px 0 4px;
+    overflow: hidden;
+  }
+
+  .sys-line {
+    font-size: 11px;
+    color: var(--g-dim);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  .cursor-blink::after {
+    content: '█';
+    animation: blink-cursor 1s step-end infinite;
+  }
+
+  .prompt { color: var(--g-bright); }
+  .label { color: var(--g-dim); }
+  .val { color: var(--g); text-shadow: 0 0 4px rgba(51, 255, 51, 0.3); }
+  .val-bright { color: var(--g-bright); text-shadow: 0 0 8px rgba(51, 255, 51, 0.5); }
+  .val-amber { color: var(--amber); text-shadow: 0 0 6px rgba(255, 170, 0, 0.4); }
+  .val-red { color: var(--red); }
+  .val-cyan { color: var(--cyan); text-shadow: 0 0 4px rgba(51, 204, 204, 0.3); }
+
+  .xp-bar-area {
+    padding: 2px 0;
+  }
+  .xp-bar-text {
+    font-size: 11px;
+    color: var(--g-dim);
+    text-align: right;
+    margin-top: 1px;
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    line-height: 1.6;
+    gap: 4px;
+  }
+
+  .stat-label {
+    width: 36px;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  .stat-label.str { color: var(--red); }
+  .stat-label.agi { color: var(--cyan); }
+  .stat-label.end { color: var(--g-bright); }
+
+  .stat-bar {
+    flex: 1;
+    overflow: hidden;
+    letter-spacing: -1px;
+  }
+  .stat-bar.str { color: var(--red); text-shadow: 0 0 4px rgba(255, 51, 51, 0.3); }
+  .stat-bar.agi { color: var(--cyan); text-shadow: 0 0 4px rgba(51, 204, 204, 0.3); }
+  .stat-bar.end { color: var(--g-bright); text-shadow: 0 0 4px rgba(51, 255, 51, 0.3); }
+
+  .stat-num {
+    width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  .stat-num.str { color: var(--red); }
+  .stat-num.agi { color: var(--cyan); }
+  .stat-num.end { color: var(--g-bright); }
+
+  .exercise-block {
+    margin-bottom: 6px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .exercise-block:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .exercise-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--g);
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .exercise-detail {
+    font-size: 11px;
+    color: var(--g-dim);
+    margin-bottom: 6px;
+  }
+
+  .vid-link {
+    color: var(--cyan);
+    text-decoration: none;
+    font-size: 11px;
+    opacity: 0.8;
+  }
+  .vid-link:active { opacity: 1; }
+
+  .sets-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .set-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    background: none;
+    border: 1px solid var(--g-dim);
+    color: var(--g-dim);
+    padding: 6px 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: all 0.1s;
+    min-width: 52px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .set-btn:active {
+    transform: scale(0.95);
+  }
+
+  .set-btn.done {
+    color: var(--g-bright);
+    border-color: var(--g);
+    text-shadow: 0 0 6px rgba(51, 255, 51, 0.6);
+    box-shadow: 0 0 4px rgba(51, 255, 51, 0.15);
+  }
+
+  .exercise-clear {
+    color: var(--g-bright);
+    font-size: 11px;
+    font-weight: 600;
+    text-shadow: 0 0 6px rgba(51, 255, 51, 0.5);
+  }
+
+  .complete-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: 1px dashed var(--g-dim);
+    color: var(--g-dim);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    cursor: default;
+    -webkit-tap-highlight-color: transparent;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .complete-btn.ready {
+    border: 2px solid var(--g);
+    color: var(--g-bright);
+    cursor: pointer;
+    text-shadow: 0 0 10px rgba(51, 255, 51, 0.6);
+    box-shadow: 0 0 8px rgba(51, 255, 51, 0.15), inset 0 0 8px rgba(51, 255, 51, 0.05);
+  }
+
+  .complete-btn.ready:active {
+    background: rgba(51, 255, 51, 0.05);
+    transform: scale(0.98);
+  }
+
+  .quest-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .quest-check { width: 20px; flex-shrink: 0; text-align: center; }
+  .quest-check.done { color: var(--g-bright); text-shadow: 0 0 6px rgba(51, 255, 51, 0.5); }
+  .quest-check.pending { color: var(--g-dim); }
+  .quest-text { color: var(--g); }
+  .quest-text.done { color: var(--g-dim); text-decoration: line-through; }
+
+  .week-grid {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    flex: 1;
+  }
+
+  .week-day {
+    flex: 1;
+    max-width: 44px;
+    text-align: center;
+    font-size: 11px;
+    padding: 6px 2px;
+    border: 1px solid var(--border);
+    color: var(--g-dim);
+  }
+
+  .week-day.done {
+    color: var(--g-bright);
+    border-color: var(--g);
+    text-shadow: 0 0 6px rgba(51, 255, 51, 0.5);
+    background: rgba(51, 255, 51, 0.05);
+  }
+
+  .week-day.today {
+    border-color: var(--amber-dim);
+    color: var(--amber);
+  }
+
+  .week-day.done.today {
+    border-color: var(--g);
+    color: var(--g-bright);
+  }
+
+  .streak-box {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: center;
+    flex-shrink: 0;
+    width: 70px;
+  }
+
+  .streak-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--g-bright);
+    text-shadow: 0 0 10px rgba(51, 255, 51, 0.5);
+    line-height: 1;
+  }
+
+  .streak-label {
+    font-size: 9px;
+    color: var(--g-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .timeline-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+  }
+
+  .done-banner {
+    border: 1px solid var(--g);
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 10px;
+    box-shadow: 0 0 12px rgba(51, 255, 51, 0.1);
+  }
+
+  .done-status {
+    font-size: 11px;
+    color: var(--g-bright);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(51, 255, 51, 0.5);
+    margin-bottom: 4px;
+  }
+
+  .done-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--g-bright);
+    text-shadow: 0 0 12px rgba(51, 255, 51, 0.5);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .done-xp {
+    font-size: 13px;
+    color: var(--amber);
+    font-weight: 600;
+  }
+
+  .done-next {
+    font-size: 11px;
+    color: var(--g-dim);
+    margin-top: 6px;
+  }
+
+  .xp-popup {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--amber);
+    text-shadow: 0 0 20px rgba(255, 170, 0, 0.8), 0 0 40px rgba(255, 170, 0, 0.4);
+    pointer-events: none;
+    animation: xp-float 1.2s ease forwards;
+    z-index: 1100;
+    letter-spacing: 2px;
+  }
+
+  .levelup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(51, 255, 51, 0.12);
+    z-index: 1200;
+    animation: levelup-flash 1.5s ease forwards;
+    pointer-events: none;
+  }
+
+  .levelup-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--g-bright);
+    text-shadow: 0 0 30px rgba(51, 255, 51, 0.8), 0 0 60px rgba(51, 255, 51, 0.4);
+    z-index: 1201;
+    animation: levelup-text 1.5s ease forwards;
+    pointer-events: none;
+  }
+
+  .sync-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--g-dim);
+    display: inline-block;
+  }
+  .sync-badge.synced { color: var(--g); }
+  .sync-badge.syncing { color: var(--amber); animation: glow-pulse 1s ease infinite; }
+  .sync-badge.error { color: var(--red); }
+  .sync-badge.local { color: var(--g-dim); }
+
+  .separator {
+    color: var(--g-dim);
+    font-size: 12px;
+    overflow: hidden;
+    white-space: pre;
+    margin: 2px 0;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+const SYNC_URL = 'https://anime-bod-sync.winslowcj5.workers.dev/api/sync';
+const params = new URLSearchParams(window.location.search);
+const USER_KEY = params.get('key');
+let syncState = USER_KEY ? 'local' : null;
+let syncDebounceTimer = null;
+
+const VID = 'https://www.youtube.com/watch?v=3Zgrh5009_k';
+const SPLITS = {
+  push: { label: 'Push Day', tag: 'STRENGTH', stat: 'str', exercises: [
+    { id: 'pike-pushups', name: 'Pike Push-ups', defaultSets: 3, defaultReps: 10, video: `${VID}&t=188s` },
+    { id: 'decline-deficit-pushups', name: 'Decline Deficit Push-ups', defaultSets: 3, defaultReps: 12, video: `${VID}&t=265s` },
+    { id: 'dips', name: 'Dips', defaultSets: 3, defaultReps: 10, video: `${VID}&t=308s` }
+  ]},
+  pull: { label: 'Pull Day', tag: 'AGILITY', stat: 'agi', exercises: [
+    { id: 'pullups', name: 'Pull-ups', defaultSets: 3, defaultReps: 8, video: `${VID}&t=55s` },
+    { id: 'inverted-rows', name: 'Inverted Rows', defaultSets: 3, defaultReps: 12, video: `${VID}&t=125s` }
+  ]},
+  legs: { label: 'Legs Day', tag: 'ENDURANCE', stat: 'end', exercises: [
+    { id: 'pistol-squats', name: 'Pistol Squats', defaultSets: 3, defaultReps: 6, video: `${VID}&t=373s` },
+    { id: 'hip-hinges', name: 'Hip Hinges', defaultSets: 3, defaultReps: 12, video: `${VID}&t=411s` },
+    { id: 'dragonflies', name: 'Dragonflies', defaultSets: 3, defaultReps: 8, video: `${VID}&t=479s` }
+  ]}
+};
+const SPLIT_ORDER = ['push', 'pull', 'legs'];
+const XP_SET = 5, XP_EXERCISE = 15, XP_WORKOUT = 30;
+
+const store = {
+  get() {
+    try { return JSON.parse(localStorage.getItem('anime-bod') || 'null') || this.fresh(); }
+    catch { return this.fresh(); }
+  },
+  save(d) { localStorage.setItem('anime-bod', JSON.stringify(d)); },
+  fresh() {
+    return {
+      version: 1,
+      player: { name: 'Hero', xp: 0, level: 1, stats: { str: 0, agi: 0, end: 0 }, streak: { current: 0, best: 0, lastDate: null } },
+      workouts: {},
+      quests: {},
+      settings: {}
+    };
+  },
+  async sync() {
+    if (!USER_KEY) return;
+    try {
+      setSyncState('syncing');
+      await fetch(`${SYNC_URL}?key=${USER_KEY}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: localStorage.getItem('anime-bod')
+      });
+      setSyncState('synced');
+    } catch(e) { setSyncState('error'); }
+  },
+  async pull() {
+    if (!USER_KEY) return;
+    try {
+      setSyncState('syncing');
+      const res = await fetch(`${SYNC_URL}?key=${USER_KEY}`);
+      if (res.ok) {
+        const remote = await res.json();
+        const local = this.get();
+        const merged = mergeState(local, remote);
+        this.save(merged);
+      }
+      setSyncState('synced');
+    } catch(e) { setSyncState('error'); }
+  }
+};
+
+function mergeState(local, remote) {
+  if (!remote || !remote.workouts) return local;
+  if (!local || !local.workouts) return remote;
+
+  const merged = JSON.parse(JSON.stringify(local));
+
+  Object.keys(remote.workouts).forEach(day => {
+    const rw = remote.workouts[day];
+    const lw = merged.workouts[day];
+    if (!lw) { merged.workouts[day] = rw; return; }
+    if (rw.completedAt && !lw.completedAt) { merged.workouts[day] = rw; return; }
+  });
+
+  Object.keys(remote.quests || {}).forEach(day => {
+    if (!merged.quests[day]) merged.quests[day] = remote.quests[day];
+  });
+
+  if (remote.player.xp > merged.player.xp) {
+    merged.player.xp = remote.player.xp;
+    merged.player.level = remote.player.level;
+  }
+  if ((remote.player.streak?.best || 0) > (merged.player.streak?.best || 0)) {
+    merged.player.streak.best = remote.player.streak.best;
+  }
+
+  return merged;
+}
+
+function setSyncState(state) {
+  syncState = state;
+  const el = document.getElementById('sync-badge');
+  if (!el) return;
+  el.className = 'sync-badge ' + state;
+  el.textContent = state === 'syncing' ? 'SYNCING...' : state === 'synced' ? 'SYNCED' : state === 'error' ? 'OFFLINE' : 'LOCAL';
+}
+
+function debouncedSync() {
+  if (!USER_KEY) return;
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(() => store.sync(), 2000);
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function xpForLevel(n) { return 50 * n + 10 * n * n; }
+
+function getCompletedCount(d) {
+  return Object.values(d.workouts).filter(w => w.completedAt).length;
+}
+
+function getTodayType(d) {
+  return SPLIT_ORDER[getCompletedCount(d) % 3];
+}
+
+function ensureTodayWorkout(d) {
+  const key = todayStr();
+  if (d.workouts[key] && d.workouts[key].completedAt) return d;
+  const type = getTodayType(d);
+  if (!d.workouts[key] || d.workouts[key].type !== type) {
+    d.workouts[key] = {
+      type,
+      exercises: SPLITS[type].exercises.map(ex => ({
+        id: ex.id, sets: Array.from({ length: ex.defaultSets }, () => ({ done: false }))
+      })),
+      completedAt: null,
+      xpEarned: 0
+    };
+  }
+  return d;
+}
+
+function ensureTodayQuests(d) {
+  const key = todayStr();
+  if (d.quests[key]) return d;
+  const type = getTodayType(d);
+  const split = SPLITS[type];
+  const quests = [
+    { id: 'complete-workout', label: `Complete ${split.label}`, done: false },
+    { id: 'all-sets', label: 'Finish every set', done: false }
+  ];
+  if (type === 'push') quests.push({ id: 'pike-master', label: 'Complete all Pike Push-ups', done: false });
+  if (type === 'pull') quests.push({ id: 'pull-master', label: 'Complete all Pull-ups', done: false });
+  if (type === 'legs') quests.push({ id: 'pistol-master', label: 'Complete all Pistol Squats', done: false });
+  d.quests[key] = quests;
+  return d;
+}
+
+function updateQuests(d) {
+  const key = todayStr();
+  const w = d.workouts[key];
+  const q = d.quests[key];
+  if (!w || !q) return;
+  const allSetsDone = w.exercises.every(ex => ex.sets.every(s => s.done));
+  q.forEach(quest => {
+    if (quest.id === 'complete-workout') quest.done = !!w.completedAt;
+    if (quest.id === 'all-sets') quest.done = allSetsDone;
+    if (quest.id === 'pike-master') quest.done = w.exercises.find(e => e.id === 'pike-pushups')?.sets.every(s => s.done) || false;
+    if (quest.id === 'pull-master') quest.done = w.exercises.find(e => e.id === 'pullups')?.sets.every(s => s.done) || false;
+    if (quest.id === 'pistol-master') quest.done = w.exercises.find(e => e.id === 'pistol-squats')?.sets.every(s => s.done) || false;
+  });
+}
+
+function calcStreak(d) {
+  let streak = 0;
+  const t = new Date();
+  if (d.workouts[todayStr()]?.completedAt) { streak++; t.setDate(t.getDate() - 1); }
+  else { t.setDate(t.getDate() - 1); }
+  for (let i = 0; i < 365; i++) {
+    const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+    const dow = t.getDay();
+    if (dow === 0) { t.setDate(t.getDate() - 1); continue; }
+    if (d.workouts[key]?.completedAt) { streak++; t.setDate(t.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
+
+function calcStats(d) {
+  const stats = { str: 0, agi: 0, end: 0 };
+  Object.values(d.workouts).forEach(w => {
+    if (!w.completedAt) return;
+    const split = SPLITS[w.type];
+    if (!split) return;
+    const vol = w.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => s.done).length, 0);
+    stats[split.stat] += vol;
+  });
+  return stats;
+}
+
+function awardXP(d, amount) {
+  const oldLevel = d.player.level;
+  d.player.xp += amount;
+  while (d.player.xp >= xpForLevel(d.player.level)) {
+    d.player.level++;
+  }
+  return d.player.level > oldLevel;
+}
+
+let pendingXpPopup = 0;
+function showXpPopup(amount) {
+  pendingXpPopup += amount;
+  const el = document.createElement('div');
+  el.className = 'xp-popup';
+  el.textContent = `+${pendingXpPopup} XP`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+  setTimeout(() => { pendingXpPopup = 0; }, 100);
+}
+
+function showLevelUp() {
+  const flash = document.createElement('div');
+  flash.className = 'levelup-overlay';
+  document.body.appendChild(flash);
+  const txt = document.createElement('div');
+  txt.className = 'levelup-text';
+  txt.textContent = 'LEVEL UP';
+  document.body.appendChild(txt);
+  setTimeout(() => { flash.remove(); txt.remove(); }, 1500);
+}
+
+function blockBar(filled, total, width) {
+  const fillCount = Math.round((filled / Math.max(total, 1)) * width);
+  return '█'.repeat(fillCount) + '░'.repeat(width - fillCount);
+}
+
+function statBar(value, max, width) {
+  if (max === 0) return '░'.repeat(width);
+  const fillCount = Math.round((value / max) * width);
+  return '█'.repeat(fillCount) + '░'.repeat(width - fillCount);
+}
+
+function render() {
+  const d = store.get();
+  ensureTodayWorkout(d);
+  ensureTodayQuests(d);
+  d.player.stats = calcStats(d);
+  d.player.streak.current = calcStreak(d);
+  if (d.player.streak.current > d.player.streak.best) d.player.streak.best = d.player.streak.current;
+  store.save(d);
+
+  const key = todayStr();
+  const w = d.workouts[key];
+  const type = w.type;
+  const split = SPLITS[type];
+  const streak = d.player.streak.current;
+  const level = d.player.level;
+  const prevLevelXp = level > 1 ? xpForLevel(level - 1) : 0;
+  const xpCur = d.player.xp - prevLevelXp;
+  const xpNeed = xpForLevel(level) - prevLevelXp;
+  const xpPct = Math.min(100, (xpCur / xpNeed) * 100);
+  const totalCompleted = getCompletedCount(d);
+  const maxStat = Math.max(d.player.stats.str, d.player.stats.agi, d.player.stats.end, 1);
+
+  let h = '';
+
+  // ASCII Header
+  h += `<div class="header-ascii">`;
+  h += ` █▀█ █▄░█ █ █▀▄▀█ █▀▀ ▄▄ █▄▄ █▀█ █▀▄\n`;
+  h += ` █▀█ █░▀█ █ █░▀░█ ██▄ ░░ █▄█ █▄█ █▄▀`;
+  h += `</div>`;
+  h += `<div class="sys-line">v2.0 // FITNESS TERMINAL // ${todayStr()}</div>`;
+  if (USER_KEY) {
+    const badgeLabel = syncState === 'syncing' ? 'SYNCING...' : syncState === 'synced' ? 'SYNCED' : syncState === 'error' ? 'OFFLINE' : 'LOCAL';
+    h += `<div class="sys-line"><span id="sync-badge" class="sync-badge ${syncState || 'local'}">[${badgeLabel}]</span></div>`;
+  }
+
+  // Player HUD
+  h += `<div class="section">`;
+  h += `<div class="separator">┌─── PLAYER ───────────────────────────┐</div>`;
+  h += `<div style="padding:4px 0">`;
+  h += `  <span class="label">CLASS:</span> <span class="val">${split.tag}</span> <span class="label">//</span> <span class="val">${split.label.toUpperCase()}</span><br>`;
+  h += `  <span class="label">LEVEL:</span> <span class="val-amber">${level}</span>  <span class="label">STREAK:</span> <span class="val-bright">${streak}d</span>  <span class="label">TOTAL:</span> <span class="val">${totalCompleted}</span>`;
+  h += `</div>`;
+  h += `<div class="separator">└──────────────────────────────────────┘</div>`;
+  h += `</div>`;
+
+  // XP Bar
+  h += `<div class="section">`;
+  h += `<div class="separator">┌─── EXP ──────────────────────────────┐</div>`;
+  h += `<div style="padding:4px 0">`;
+  h += `  <span class="label">LV.${level}</span> <span class="val-amber">[${blockBar(xpCur, xpNeed, 26)}]</span> <span class="label">LV.${level + 1}</span><br>`;
+  h += `  <span class="xp-bar-text">${xpCur}/${xpNeed} XP</span>`;
+  h += `</div>`;
+  h += `<div class="separator">└──────────────────────────────────────┘</div>`;
+  h += `</div>`;
+
+  // Stats
+  h += `<div class="section">`;
+  h += `<div class="separator">┌─── STATS ────────────────────────────┐</div>`;
+  h += `<div style="padding:4px 0">`;
+  const statTips = { str: 'Push days', agi: 'Pull days', end: 'Legs days' };
+  ['str', 'agi', 'end'].forEach(s => {
+    const val = d.player.stats[s];
+    h += `<div class="stat-row">`;
+    h += `  <span class="stat-label ${s}">${s.toUpperCase()}</span>`;
+    h += `  <span class="stat-bar ${s}">${statBar(val, maxStat, 24)}</span>`;
+    h += `  <span class="stat-num ${s}">${String(val).padStart(3)}</span>`;
+    h += `</div>`;
+  });
+  h += `</div>`;
+  h += `<div class="separator">└──────────────────────────────────────┘</div>`;
+  h += `</div>`;
+
+  if (w.completedAt) {
+    // Done state
+    const nextType = SPLIT_ORDER[totalCompleted % 3];
+    const nextSplit = SPLITS[nextType];
+    h += `<div class="done-banner">`;
+    h += `<div class="done-status">═══ MISSION COMPLETE ═══</div>`;
+    h += `<div class="done-title">${split.label}</div>`;
+    h += `<div class="done-xp">+${w.xpEarned} XP EARNED</div>`;
+    h += `<div class="done-next">NEXT &gt; ${nextSplit.label.toUpperCase()}</div>`;
+    h += `</div>`;
+  } else {
+    // Mission header + exercises
+    let totalSets = 0, doneSets = 0;
+    w.exercises.forEach(ex => {
+      ex.sets.forEach(s => { totalSets++; if (s.done) doneSets++; });
+    });
+
+    h += `<div class="section">`;
+    h += `<div class="separator">┌─── MISSION: ${split.label.toUpperCase()} ${'─'.repeat(Math.max(0, 23 - split.label.length))}┐</div>`;
+    h += `<div style="padding:2px 0 4px">`;
+    h += `  <span class="label">PROGRESS:</span> <span class="val">[${blockBar(doneSets, totalSets, 20)}]</span> <span class="val-bright">${doneSets}/${totalSets}</span>`;
+    h += `</div>`;
+
+    w.exercises.forEach((ex, ei) => {
+      const cfg = split.exercises[ei];
+      const allDone = ex.sets.every(s => s.done);
+      h += `<div class="exercise-block">`;
+      h += `<div class="exercise-name">`;
+      h += `<span class="prompt">&gt;</span> ${cfg.name}`;
+      if (cfg.video) h += ` <a href="${cfg.video}" target="_blank" class="vid-link">[▶ vid]</a>`;
+      if (allDone) h += ` <span class="exercise-clear">[CLEAR]</span>`;
+      h += `</div>`;
+      h += `<div class="exercise-detail">${cfg.defaultSets} sets × ${cfg.defaultReps} reps</div>`;
+      h += `<div class="sets-row">`;
+      ex.sets.forEach((s, si) => {
+        const label = s.done ? `[X] S${si + 1}` : `[ ] S${si + 1}`;
+        h += `<button class="set-btn ${s.done ? 'done' : ''}" onclick="toggleSet(${ei},${si})">${label}</button>`;
+      });
+      h += `</div></div>`;
+    });
+
+    h += `<div class="separator">└──────────────────────────────────────┘</div>`;
+    h += `</div>`;
+
+    // Complete button
+    const canComplete = doneSets === totalSets && totalSets > 0;
+    h += `<button class="complete-btn ${canComplete ? 'ready' : ''}" ${canComplete ? 'onclick="completeWorkout()"' : ''}>`;
+    h += canComplete ? '>>> EXECUTE MISSION <<<' : `[ ${doneSets} / ${totalSets} SETS ]`;
+    h += `</button>`;
+  }
+
+  // Quest log
+  updateQuests(d);
+  store.save(d);
+  const quests = d.quests[key] || [];
+  h += `<div class="section" style="margin-top:10px">`;
+  h += `<div class="separator">┌─── QUEST LOG ────────────────────────┐</div>`;
+  h += `<div style="padding:4px 0">`;
+  quests.forEach(q => {
+    h += `<div class="quest-item">`;
+    h += `<span class="quest-check ${q.done ? 'done' : 'pending'}">${q.done ? '[✓]' : '[ ]'}</span>`;
+    h += `<span class="quest-text ${q.done ? 'done' : ''}">${q.label}</span>`;
+    h += `</div>`;
+  });
+  h += `</div>`;
+  h += `<div class="separator">└──────────────────────────────────────┘</div>`;
+  h += `</div>`;
+
+  // Timeline
+  h += `<div class="section">`;
+  h += `<div class="separator">┌─── THIS WEEK ────────────────────────┐</div>`;
+  h += `<div style="padding:6px 0">`;
+  h += `<div class="timeline-row">`;
+  h += `<div class="streak-box"><div class="streak-num">${streak}</div><div class="streak-label">STREAK</div></div>`;
+  h += `<div class="week-grid">`;
+  const now = new Date();
+  const mon = new Date(now);
+  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  const dayLabels = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+  for (let i = 0; i < 7; i++) {
+    const dt = new Date(mon);
+    dt.setDate(dt.getDate() + i);
+    const dk = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    const isToday = dk === todayStr();
+    const wk = d.workouts[dk];
+    const done = wk?.completedAt;
+    h += `<div class="week-day ${done ? 'done' : ''} ${isToday ? 'today' : ''}">${dayLabels[i]}${done ? '<br>██' : '<br>░░'}</div>`;
+  }
+  h += `</div></div>`;
+  h += `</div>`;
+  h += `<div class="separator">└──────────────────────────────────────┘</div>`;
+  h += `</div>`;
+
+  h += `<div class="sys-line cursor-blink" style="margin-top:8px">READY</div>`;
+
+  document.getElementById('app').innerHTML = h;
+}
+
+function toggleSet(ei, si) {
+  const d = store.get();
+  ensureTodayWorkout(d);
+  const w = d.workouts[todayStr()];
+  if (w.completedAt) return;
+
+  const set = w.exercises[ei].sets[si];
+  const wasDone = set.done;
+  set.done = !set.done;
+
+  if (!wasDone) {
+    awardXP(d, XP_SET);
+    showXpPopup(XP_SET);
+    const allExSets = w.exercises[ei].sets.every(s => s.done);
+    if (allExSets) {
+      awardXP(d, XP_EXERCISE);
+      showXpPopup(XP_EXERCISE);
+    }
+  } else {
+    const wasAllDone = w.exercises[ei].sets.filter((s, idx) => idx !== si).every(s => s.done);
+    if (wasAllDone) d.player.xp = Math.max(0, d.player.xp - XP_EXERCISE);
+    d.player.xp = Math.max(0, d.player.xp - XP_SET);
+    while (d.player.level > 1 && d.player.xp < xpForLevel(d.player.level - 1)) d.player.level--;
+  }
+
+  store.save(d);
+  render();
+  debouncedSync();
+}
+
+function completeWorkout() {
+  const d = store.get();
+  const key = todayStr();
+  const w = d.workouts[key];
+  if (w.completedAt) return;
+  if (!w.exercises.every(ex => ex.sets.every(s => s.done))) return;
+
+  let earned = XP_WORKOUT;
+  const streak = calcStreak(d) + 1;
+  earned += streak * 2;
+  w.xpEarned = (w.xpEarned || 0) + earned;
+  w.completedAt = new Date().toISOString();
+
+  const leveled = awardXP(d, earned);
+  showXpPopup(earned);
+
+  d.player.streak.current = streak;
+  if (streak > d.player.streak.best) d.player.streak.best = streak;
+  d.player.streak.lastDate = key;
+
+  store.save(d);
+  render();
+
+  if (leveled) {
+    setTimeout(showLevelUp, 200);
+  }
+
+  store.sync();
+}
+
+render();
+store.pull().then(() => render());
+</script>
+</body>
+</html>
