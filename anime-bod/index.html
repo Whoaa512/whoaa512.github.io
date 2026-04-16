@@ -1408,7 +1408,21 @@ function promptSessionKey() {
 }
 
 render();
-store.pull().then(() => render());
+store.pull().then(() => {
+  const d = store.get();
+  const key = todayStr();
+  const w = d.workouts[key];
+  if (w && !w.completedAt) {
+    const correctType = getTodayType(d);
+    const hasProgress = w.exercises?.some(ex => ex.sets.some(s => s.state !== 'empty'));
+    if (w.type !== correctType && !hasProgress) {
+      delete d.workouts[key];
+      delete d.quests[key];
+      store.save(d);
+    }
+  }
+  render();
+});
 </script>
 </body>
 </html>
