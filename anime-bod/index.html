@@ -1000,11 +1000,11 @@ function ensureTodayQuests(d) {
   const split = SPLITS[type];
   const quests = [
     { id: 'complete-workout', label: `Complete ${split.label}`, done: false },
-    { id: 'all-sets', label: 'Finish every set', done: false }
+    { id: 'all-sets', label: 'Full-clear every set (no partials)', done: false }
   ];
-  if (type === 'push') quests.push({ id: 'pike-master', label: 'Complete all Pike Push-ups', done: false });
-  if (type === 'pull') quests.push({ id: 'pull-master', label: 'Complete all Pull-ups', done: false });
-  if (type === 'legs') quests.push({ id: 'pistol-master', label: 'Complete all Pistol Squats', done: false });
+  if (type === 'push') quests.push({ id: 'pike-master', label: 'Full-clear all Pike Push-ups', done: false });
+  if (type === 'pull') quests.push({ id: 'pull-master', label: 'Full-clear all Pull-ups', done: false });
+  if (type === 'legs') quests.push({ id: 'pistol-master', label: 'Full-clear all Pistol Squats', done: false });
   d.quests[key] = quests;
   return d;
 }
