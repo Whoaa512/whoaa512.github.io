@@ -792,6 +792,55 @@
     -webkit-tap-highlight-color: transparent;
   }
   .help-btn:active { background: var(--panel-edge); }
+  .settings-btn {
+    position: absolute;
+    top: 14px;
+    left: 40px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--seam);
+    background: var(--panel);
+    color: var(--dim);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .settings-btn:active { background: var(--panel-edge); }
+  .settings-modal { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; }
+  .settings-content {
+    background: var(--panel);
+    border: 2px solid var(--seam);
+    border-radius: 12px;
+    padding: 1.2rem;
+    max-width: 340px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 2;
+  }
+  .settings-content h3 { margin: 0 0 0.8rem; color: var(--fg); font-size: 1rem; }
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--seam);
+  }
+  .settings-row label { color: var(--dim); font-size: 0.8rem; }
+  .settings-row input[type="number"] {
+    width: 50px;
+    background: var(--bg);
+    border: 1px solid var(--seam);
+    border-radius: 4px;
+    color: var(--fg);
+    padding: 4px 6px;
+    font-size: 0.85rem;
+    text-align: center;
+  }
 
   .help-modal { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; }
   .help-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); }
@@ -1033,12 +1082,13 @@ function calcStreak(d) {
   const t = new Date();
   if (d.workouts[todayStr()]?.completedAt) { streak++; t.setDate(t.getDate() - 1); }
   else { t.setDate(t.getDate() - 1); }
+  let missed = 0;
   for (let i = 0; i < 365; i++) {
     const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
     const dow = t.getDay();
     if (dow === 0) { t.setDate(t.getDate() - 1); continue; }
-    if (d.workouts[key]?.completedAt) { streak++; t.setDate(t.getDate() - 1); }
-    else break;
+    if (d.workouts[key]?.completedAt) { streak++; missed = 0; t.setDate(t.getDate() - 1); }
+    else { missed++; if (missed > 1) break; t.setDate(t.getDate() - 1); }
   }
   return streak;
 }
@@ -1115,6 +1165,7 @@ function render() {
   // Console Header
   h += `<div class="console-header">`;
   h += `<button class="help-btn" onclick="toggleHelp()" aria-label="Help">?</button>`;
+  h += `<button class="settings-btn" onclick="toggleSettings()" aria-label="Settings">⚙</button>`;
   h += `<div class="console-logo">Anime Physique</div>`;
   h += `<div class="console-title">Training Console</div>`;
   h += `<div class="console-subtitle">Level ${level} // ${split.tag}</div>`;
@@ -1187,7 +1238,8 @@ function render() {
       h += `<div class="skill-card ${allDone ? 'all-done' : ''}">`;
       const vidIcon = `<svg viewBox="0 0 24 20" width="32" height="26" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="22" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/><polygon points="9,5.5 9,14.5 17,10" fill="currentColor"/></svg>`;
       h += `<div class="skill-name">${cfg.name} ${cfg.video ? `<a href="${cfg.video}" target="_blank" class="skill-video">${vidIcon}</a>` : ''}</div>`;
-      h += `<div class="skill-detail">${cfg.defaultSets} SETS / ${cfg.defaultReps} REPS</div>`;
+      const reps = d.settings.reps?.[cfg.id] || cfg.defaultReps;
+      h += `<div class="skill-detail">${cfg.defaultSets} SETS / ${reps} REPS</div>`;
       h += `<div class="skill-sets">`;
       ex.sets.forEach((s, si) => {
         const cls = setIsDone(s) ? 'done' : setIsPartial(s) ? 'partial' : '';
@@ -1396,6 +1448,57 @@ function toggleHelp() {
     </div>
   `;
   document.body.appendChild(modal);
+}
+
+function toggleSettings() {
+  let modal = document.getElementById('settings-modal');
+  if (modal) { modal.remove(); return; }
+  const d = store.get();
+  if (!d.settings.reps) d.settings.reps = {};
+  modal = document.createElement('div');
+  modal.id = 'settings-modal';
+  modal.className = 'settings-modal';
+  let rows = '';
+  SPLIT_ORDER.forEach(splitKey => {
+    const split = SPLITS[splitKey];
+    rows += `<div style="color:var(--accent);font-size:0.75rem;margin-top:0.6rem;text-transform:uppercase">${split.label}</div>`;
+    split.exercises.forEach(ex => {
+      const val = d.settings.reps[ex.id] || ex.defaultReps;
+      rows += `<div class="settings-row"><label>${ex.name}</label><input type="number" min="1" max="50" value="${val}" data-id="${ex.id}" data-default="${ex.defaultReps}"></div>`;
+    });
+  });
+  modal.innerHTML = `
+    <div class="help-backdrop" onclick="toggleSettings()"></div>
+    <div class="settings-content">
+      <h3>Rep Targets</h3>
+      ${rows}
+      <button class="help-close" onclick="saveSettings()" style="margin-top:0.8rem">Save</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function saveSettings() {
+  const d = store.get();
+  if (!d.settings.reps) d.settings.reps = {};
+  if (!d.settings.repsHistory) d.settings.repsHistory = {};
+  const today = todayStr();
+  document.querySelectorAll('#settings-modal input[type="number"]').forEach(inp => {
+    const id = inp.dataset.id;
+    const def = parseInt(inp.dataset.default);
+    const val = parseInt(inp.value) || def;
+    const prev = d.settings.reps[id] || def;
+    if (val !== prev) {
+      if (!d.settings.repsHistory[id]) d.settings.repsHistory[id] = [];
+      d.settings.repsHistory[id].push({ reps: val, date: today });
+    }
+    if (val !== def) d.settings.reps[id] = val;
+    else delete d.settings.reps[id];
+  });
+  store.save(d);
+  store.sync();
+  document.getElementById('settings-modal')?.remove();
+  render();
 }
 
 function promptSessionKey() {
