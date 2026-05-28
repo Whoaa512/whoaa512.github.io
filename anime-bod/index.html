@@ -888,6 +888,82 @@
     cursor: pointer;
   }
   .help-close:active { background: rgba(0,195,255,0.1); }
+
+  @keyframes alarm-pulse {
+    0%, 100% { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0,195,255,0.2); }
+    50% { border-color: var(--orange); box-shadow: 0 0 20px var(--orange-glow); }
+  }
+
+  .timer-panel {
+    background: var(--panel);
+    border: 3px solid var(--panel-edge);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .timer-panel.alarming {
+    animation: alarm-pulse 0.8s ease infinite;
+  }
+
+  .timer-header {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--cyan);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .timer-display {
+    font-family: 'Courier New', monospace;
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--text);
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+  }
+
+  .timer-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .timer-btn {
+    height: 40px;
+    padding: 0 16px;
+    border: 3px solid var(--seam);
+    border-radius: 10px;
+    background: #15152e;
+    color: var(--dim);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: all 0.15s;
+  }
+
+  .timer-btn:active { transform: scale(0.9); }
+
+  .timer-btn.active {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 8px rgba(0,195,255,0.2);
+  }
+
+  .settings-row select {
+    background: var(--bg);
+    border: 1px solid var(--seam);
+    border-radius: 4px;
+    color: var(--text);
+    padding: 4px 6px;
+    font-size: 0.85rem;
+  }
 </style>
 </head>
 <body>
@@ -1144,6 +1220,106 @@ function showLevelUp() {
   setTimeout(() => { flash.remove(); txt.remove(); }, 1500);
 }
 
+let audioCtx = null;
+let timerState = { running: false, remaining: 0, intervalId: null, alarmId: null };
+
+function getDefaultTimerSeconds(d) {
+  if (!d) d = store.get();
+  return d.settings.timerSeconds || 300;
+}
+
+function playBoop() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = 520;
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.3);
+}
+
+function triggerAlarm() {
+  const d = store.get();
+  const mode = d.settings.beepMode || 'once';
+  playBoop();
+  if (mode === 'twice') {
+    setTimeout(playBoop, 300);
+  } else if (mode === 'repeat') {
+    timerState.alarmId = setInterval(playBoop, 2000);
+  }
+  const panel = document.getElementById('timer-panel');
+  if (panel) panel.classList.add('alarming');
+}
+
+function dismissAlarm() {
+  if (timerState.alarmId) { clearInterval(timerState.alarmId); timerState.alarmId = null; }
+  const panel = document.getElementById('timer-panel');
+  if (panel) panel.classList.remove('alarming');
+}
+
+function updateTimerDisplay() {
+  const display = document.getElementById('timer-display');
+  if (!display) return;
+  const mins = Math.floor(timerState.remaining / 60);
+  const secs = timerState.remaining % 60;
+  display.textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+  const toggleBtn = document.getElementById('timer-toggle');
+  if (toggleBtn) {
+    toggleBtn.textContent = timerState.running ? 'PAUSE' : 'START';
+    toggleBtn.classList.toggle('active', timerState.running);
+  }
+}
+
+function startTimer() {
+  if (timerState.remaining <= 0) timerState.remaining = getDefaultTimerSeconds();
+  dismissAlarm();
+  timerState.running = true;
+  timerState.intervalId = setInterval(() => {
+    timerState.remaining--;
+    if (timerState.remaining <= 0) {
+      timerState.remaining = 0;
+      clearInterval(timerState.intervalId);
+      timerState.intervalId = null;
+      timerState.running = false;
+      triggerAlarm();
+    }
+    updateTimerDisplay();
+  }, 1000);
+  updateTimerDisplay();
+}
+
+function pauseTimer() {
+  clearInterval(timerState.intervalId);
+  timerState.intervalId = null;
+  timerState.running = false;
+  updateTimerDisplay();
+}
+
+function resetTimer() {
+  clearInterval(timerState.intervalId);
+  timerState.intervalId = null;
+  timerState.running = false;
+  timerState.remaining = getDefaultTimerSeconds();
+  dismissAlarm();
+  updateTimerDisplay();
+}
+
+function toggleTimer() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (timerState.running) pauseTimer();
+  else startTimer();
+}
+
+function addTime(secs) {
+  timerState.remaining += secs;
+  dismissAlarm();
+  updateTimerDisplay();
+}
+
 function render() {
   const d = store.get();
   ensureTodayWorkout(d);
@@ -1257,7 +1433,18 @@ function render() {
     });
     h += `</div>`;
 
-    // Complete button
+    const timerMins = Math.floor(timerState.remaining / 60);
+    const timerSecs = timerState.remaining % 60;
+    const timerText = timerState.remaining > 0 ? `${timerMins}:${String(timerSecs).padStart(2, '0')}` : `${Math.floor(getDefaultTimerSeconds(d) / 60)}:${String(getDefaultTimerSeconds(d) % 60).padStart(2, '0')}`;
+    h += `<div class="timer-panel" id="timer-panel">`;
+    h += `<div class="timer-header">Rest Timer</div>`;
+    h += `<div class="timer-display" id="timer-display">${timerText}</div>`;
+    h += `<div class="timer-controls">`;
+    h += `<button class="timer-btn ${timerState.running ? 'active' : ''}" id="timer-toggle" onclick="toggleTimer()">${timerState.running ? 'PAUSE' : 'START'}</button>`;
+    h += `<button class="timer-btn" onclick="resetTimer()">RESET</button>`;
+    h += `<button class="timer-btn" onclick="addTime(30)">+30s</button>`;
+    h += `</div></div>`;
+
     const allDone = doneSets === totalSets && totalSets > 0;
     const canComplete = attemptedSets > 0;
     h += `<button class="complete-btn ${allDone ? 'ready perfect' : canComplete ? 'ready' : ''}" ${canComplete ? 'onclick="completeWorkout()"' : ''}>`;
@@ -1299,6 +1486,7 @@ function render() {
   h += `</div></div>`;
 
   document.getElementById('app').innerHTML = h;
+  updateTimerDisplay();
 }
 
 function updateSetUI(d) {
@@ -1475,11 +1663,16 @@ function toggleSettings() {
       rows += `<div class="settings-row"><label>${ex.name}</label><input type="number" min="1" max="50" value="${val}" data-id="${ex.id}" data-default="${ex.defaultReps}"></div>`;
     });
   });
+  const timerMin = (d.settings.timerSeconds || 300) / 60;
+  const beepMode = d.settings.beepMode || 'once';
   modal.innerHTML = `
     <div class="help-backdrop" onclick="toggleSettings()"></div>
     <div class="settings-content">
       <h3>Rep Targets</h3>
       ${rows}
+      <div style="color:var(--cyan);font-size:0.75rem;margin-top:0.8rem;text-transform:uppercase;letter-spacing:2px">Timer</div>
+      <div class="settings-row"><label>Default Time (min)</label><input type="number" id="timer-min-input" min="1" max="30" value="${timerMin}"></div>
+      <div class="settings-row"><label>Beep Mode</label><select id="beep-mode-select"><option value="once" ${beepMode === 'once' ? 'selected' : ''}>Once</option><option value="twice" ${beepMode === 'twice' ? 'selected' : ''}>Twice</option><option value="repeat" ${beepMode === 'repeat' ? 'selected' : ''}>Repeat</option></select></div>
       <button class="help-close" onclick="saveSettings()" style="margin-top:0.8rem">Save</button>
     </div>
   `;
@@ -1503,6 +1696,10 @@ function saveSettings() {
     if (val !== def) d.settings.reps[id] = val;
     else delete d.settings.reps[id];
   });
+  const timerMinInput = document.getElementById('timer-min-input');
+  if (timerMinInput) d.settings.timerSeconds = parseFloat(timerMinInput.value) * 60 || 300;
+  const beepSelect = document.getElementById('beep-mode-select');
+  if (beepSelect) d.settings.beepMode = beepSelect.value || 'once';
   store.save(d);
   store.sync();
   document.getElementById('settings-modal')?.remove();
