@@ -1024,7 +1024,13 @@ function getCompletedCount(d) {
 }
 
 function getTodayType(d) {
-  return SPLIT_ORDER[getCompletedCount(d) % 3];
+  const completed = Object.entries(d.workouts)
+    .filter(([_, w]) => w.completedAt)
+    .sort((a, b) => b[0].localeCompare(a[0]));
+  if (completed.length === 0) return 'push';
+  const lastType = completed[0][1].type;
+  const lastIdx = SPLIT_ORDER.indexOf(lastType);
+  return SPLIT_ORDER[(lastIdx + 1) % 3];
 }
 
 function ensureTodayWorkout(d) {
